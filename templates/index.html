@@ -4,286 +4,528 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>能量码生成器 - 一码多付 · 美化收款</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+
+        * {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+        }
+
+        .energy-glow {
+            box-shadow: 0 0 30px rgba(132, 204, 22, 0.3), 0 0 60px rgba(132, 204, 22, 0.1);
+        }
+
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #84cc16, transparent);
+            animation: scan 2s linear infinite;
+            top: 0;
+        }
+
+        @keyframes scan {
+            0% { top: 0; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        .pulse-ring {
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        .qr-preview {
+            transition: all 0.3s ease;
+        }
+
+        .qr-preview:hover {
+            transform: scale(1.02);
+        }
+
+        .style-btn {
+            transition: all 0.2s ease;
+        }
+
+        .style-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .style-btn.active {
+            ring: 2px solid #84cc16;
+            transform: scale(1.05);
+        }
+
+        .upload-zone {
+            border: 2px dashed rgba(132, 204, 22, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: #84cc16;
+            background: rgba(132, 204, 22, 0.05);
+        }
+
+        .energy-badge {
+            background: linear-gradient(135deg, #84cc16, #65a30d);
+            box-shadow: 0 4px 15px rgba(132, 204, 22, 0.4);
+        }
+
+        .color-picker-wrapper {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .color-picker-wrapper input[type="color"] {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            cursor: pointer;
+            opacity: 0;
+        }
+
+        .slider-track {
+            background: linear-gradient(90deg, #1e3a5f, #2563eb, #7c3aed, #db2777, #dc2626, #ea580c, #ca8a04, #16a34a);
+        }
+
+        .tab-active {
+            border-bottom: 2px solid #84cc16;
+            color: #84cc16;
+        }
+
+        .floating-particle {
+            position: fixed;
+            pointer-events: none;
+            opacity: 0.6;
+            animation: float-up 8s linear infinite;
+        }
+
+        @keyframes float-up {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(-100px) rotate(720deg); opacity: 0; }
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #84cc16, #65a30d);
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(132, 204, 22, 0.4);
+        }
+
+        .template-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .template-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .template-card.selected {
+            ring: 3px solid #84cc16;
+        }
+
+        .qr-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .corner-decoration {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #84cc16;
+        }
+
+        .corner-tl { top: -5px; left: -5px; border-right: none; border-bottom: none; }
+        .corner-tr { top: -5px; right: -5px; border-left: none; border-bottom: none; }
+        .corner-bl { bottom: -5px; left: -5px; border-right: none; border-top: none; }
+        .corner-br { bottom: -5px; right: -5px; border-left: none; border-top: none; }
+
+        .multi-qr-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .payment-tag {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            z-index: 10;
+        }
+
+        .tag-alipay { background: #1677ff; color: white; }
+        .tag-wechat { background: #07c160; color: white; }
+        .tag-union { background: #c41e3a; color: white; }
+        .tag-custom { background: #f59e0b; color: white; }
+        .tag-trc { background: #26A17B; color: white; }
+        .tag-erc { background: #3C3C3D; color: white; }
+    </style>
 </head>
-<body class="gradient-bg">
+<body class="gradient-bg min-h-screen text-white overflow-x-hidden">
     <!-- 浮动粒子背景 -->
     <div id="particles"></div>
 
     <!-- 头部 -->
-    <header class="glass-header">
-        <div class="header-content">
-            <div class="logo">
-                <div class="logo-icon">⚡</div>
-                <div class="logo-text">
-                    <h1>能量码生成器</h1>
-                    <p>一码多付 · 智能美化 · 即时可用</p>
+    <header class="fixed top-0 left-0 right-0 z-50 glass-panel border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl energy-badge flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">能量码生成器</h1>
+                    <p class="text-xs text-gray-400">一码多付 · 智能美化 · 即时可用</p>
                 </div>
             </div>
-            <div class="version-badge">v3.0</div>
+            <div class="flex items-center gap-4">
+                <span class="energy-badge px-3 py-1 rounded-full text-xs font-bold">v3.0</span>
+                <button onclick="showHelp()" class="text-gray-400 hover:text-white transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </button>
+            </div>
         </div>
     </header>
 
     <!-- 主内容 -->
-    <main class="main-container">
+    <main class="pt-24 pb-12 px-4 max-w-7xl mx-auto">
 
         <!-- 模式切换 -->
-        <div class="mode-switch">
-            <button class="mode-btn active" data-mode="single">
-                <span class="mode-icon">🎯</span>单码美化
-            </button>
-            <button class="mode-btn" data-mode="multi">
-                <span class="mode-icon">🎲</span>聚合能量码
-            </button>
-            <button class="mode-btn" data-mode="batch">
-                <span class="mode-icon">📦</span>批量生成
-            </button>
-        </div>
-
-        <!-- ===== 单码美化模式 ===== -->
-        <div class="mode-content active" id="mode-single">
-            <div class="layout-grid">
-
-                <!-- 左侧：输入与设置 -->
-                <div class="left-panel">
-
-                    <!-- 支付信息 -->
-                    <div class="glass-card">
-                        <div class="card-header">
-                            <span class="step-num">1</span>
-                            <h3>支付信息</h3>
-                        </div>
-
-                        <div class="form-group">
-                            <label>支付方式</label>
-                            <div class="method-grid">
-                                <div class="method-item active" data-method="alipay">
-                                    <div class="method-color" style="background:#1677FF"></div>
-                                    <span>支付宝</span>
-                                </div>
-                                <div class="method-item" data-method="wechat">
-                                    <div class="method-color" style="background:#07C160"></div>
-                                    <span>微信</span>
-                                </div>
-                                <div class="method-item" data-method="usdt_trc20">
-                                    <div class="method-color" style="background:#26A17B"></div>
-                                    <span>USDT-TRC20</span>
-                                </div>
-                                <div class="method-item" data-method="usdt_erc20">
-                                    <div class="method-color" style="background:#3C3C3D"></div>
-                                    <span>USDT-ERC20</span>
-                                </div>
-                                <div class="method-item" data-method="union">
-                                    <div class="method-color" style="background:#C41E3A"></div>
-                                    <span>云闪付</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label>收款链接 / 钱包地址</label>
-                            <textarea id="single-data" class="glass-input" rows="3" placeholder="粘贴支付宝收款链接、微信收款码URL或USDT钱包地址..."></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label>金额（可选）</label>
-                            <input type="text" id="amount" class="glass-input" placeholder="例如: 100.00">
-                        </div>
-                    </div>
-
-                    <!-- 样式设置 -->
-                    <div class="glass-card">
-                        <div class="card-header">
-                            <span class="step-num">2</span>
-                            <h3>样式设置</h3>
-                        </div>
-
-                        <div class="form-group">
-                            <label>背景风格</label>
-                            <div class="style-grid">
-                                <div class="style-item active" data-style="gradient-blue">
-                                    <div class="style-preview" style="background:linear-gradient(135deg,#1677ff,#0056d6)"></div>
-                                    <span>蓝色渐变</span>
-                                </div>
-                                <div class="style-item" data-style="gradient-purple">
-                                    <div class="style-preview" style="background:linear-gradient(135deg,#7c3aed,#db2777)"></div>
-                                    <span>紫粉渐变</span>
-                                </div>
-                                <div class="style-item" data-style="gradient-dark">
-                                    <div class="style-preview" style="background:linear-gradient(135deg,#1f2937,#111827)"></div>
-                                    <span>暗黑商务</span>
-                                </div>
-                                <div class="style-item" data-style="gradient-gold">
-                                    <div class="style-preview" style="background:linear-gradient(135deg,#fbbf24,#d97706)"></div>
-                                    <span>金色奢华</span>
-                                </div>
-                                <div class="style-item" data-style="solid">
-                                    <div class="style-preview" style="background:#ffffff;border:1px solid #ddd"></div>
-                                    <span>纯白简约</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label>二维码颜色</label>
-                            <div class="color-row">
-                                <div class="color-dot active" data-color="#000000" style="background:#000"></div>
-                                <div class="color-dot" data-color="#1677ff" style="background:#1677ff"></div>
-                                <div class="color-dot" data-color="#07c160" style="background:#07c160"></div>
-                                <div class="color-dot" data-color="#c41e3a" style="background:#c41e3a"></div>
-                                <div class="color-dot" data-color="#7c3aed" style="background:#7c3aed"></div>
-                                <input type="color" id="custom-qr-color" value="#000000" class="color-picker">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label>收款标题</label>
-                            <input type="text" id="qr-title" class="glass-input" value="推荐使用支付宝" placeholder="收款标题">
-                        </div>
-
-                        <div class="form-group">
-                            <label>副标题</label>
-                            <input type="text" id="qr-subtitle" class="glass-input" value="打开支付宝[扫一扫]" placeholder="副标题提示">
-                        </div>
-
-                        <div class="form-group checkbox-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="energy-toggle" checked>
-                                <span class="checkmark"></span>
-                                <span>显示能量标签</span>
-                                <span class="energy-tag">绿色能量</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 右侧：预览与下载 -->
-                <div class="right-panel">
-                    <div class="glass-card sticky-card">
-                        <div class="card-header">
-                            <span class="step-num">3</span>
-                            <h3>实时预览</h3>
-                        </div>
-
-                        <div class="preview-area">
-                            <div id="qr-preview-container" class="qr-container">
-                                <div id="preview-placeholder">
-                                    <div class="placeholder-icon">📱</div>
-                                    <p>点击「生成能量码」查看效果</p>
-                                </div>
-                                <img id="preview-img" class="qr-image" style="display:none;" alt="QR Preview">
-                                <div class="corner-decoration corner-tl"></div>
-                                <div class="corner-decoration corner-tr"></div>
-                                <div class="corner-decoration corner-bl"></div>
-                                <div class="corner-decoration corner-br"></div>
-                                <div class="scan-line"></div>
-                            </div>
-                        </div>
-
-                        <div class="action-buttons">
-                            <button id="generate-btn" class="btn-primary btn-glow">
-                                <span>⚡</span> 生成能量码
-                            </button>
-                            <button id="download-btn" class="btn-download" style="display:none;">
-                                <span>⬇️</span> 下载 PNG
-                            </button>
-                        </div>
-
-                        <div class="energy-status">
-                            <div class="pulse-dot"></div>
-                            <span>多人同时扫码就绪</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ===== 聚合能量码模式 ===== -->
-        <div class="mode-content" id="mode-multi">
-            <div class="glass-card multi-card">
-                <h3>上传多个收款码生成聚合能量码</h3>
-                <p class="sub-text">支持同时上传多个支付平台的收款码，生成统一的聚合码</p>
-
-                <div class="multi-upload-grid">
-                    <div class="upload-box" data-type="alipay">
-                        <div class="upload-tag tag-alipay">支付宝</div>
-                        <div class="upload-zone">
-                            <input type="text" class="glass-input" data-multi="alipay" placeholder="粘贴支付宝收款链接">
-                        </div>
-                    </div>
-                    <div class="upload-box" data-type="wechat">
-                        <div class="upload-tag tag-wechat">微信支付</div>
-                        <div class="upload-zone">
-                            <input type="text" class="glass-input" data-multi="wechat" placeholder="粘贴微信收款链接">
-                        </div>
-                    </div>
-                    <div class="upload-box" data-type="usdt_trc20">
-                        <div class="upload-tag tag-trc">USDT-TRC20</div>
-                        <div class="upload-zone">
-                            <input type="text" class="glass-input" data-multi="usdt_trc20" placeholder="粘贴TRC20钱包地址">
-                        </div>
-                    </div>
-                    <div class="upload-box" data-type="usdt_erc20">
-                        <div class="upload-tag tag-erc">USDT-ERC20</div>
-                        <div class="upload-zone">
-                            <input type="text" class="glass-input" data-multi="usdt_erc20" placeholder="粘贴ERC20钱包地址">
-                        </div>
-                    </div>
-                </div>
-
-                <button id="generate-multi-btn" class="btn-primary btn-glow">
-                    <span>🎲</span> 生成聚合能量码
+        <div class="flex justify-center mb-8">
+            <div class="glass-panel rounded-2xl p-1.5 flex gap-1">
+                <button onclick="setMode('single')" id="btn-single" class="px-6 py-2.5 rounded-xl font-medium transition-all tab-active">
+                    单码美化
                 </button>
+                <button onclick="setMode('multi')" id="btn-multi" class="px-6 py-2.5 rounded-xl font-medium transition-all text-gray-400 hover:text-white">
+                    聚合能量码
+                </button>
+                <button onclick="setMode('batch')" id="btn-batch" class="px-6 py-2.5 rounded-xl font-medium transition-all text-gray-400 hover:text-white">
+                    批量生成
+                </button>
+            </div>
+        </div>
 
-                <div id="multi-preview" class="multi-preview-area" style="display:none;">
-                    <div id="multi-grid" class="multi-grid"></div>
-                    <button id="download-multi-btn" class="btn-download">
-                        <span>📦</span> 批量下载
-                    </button>
+        <!-- 单码美化模式 -->
+        <div id="mode-single" class="grid lg:grid-cols-2 gap-8">
+
+            <!-- 左侧：上传与设置 -->
+            <div class="space-y-6">
+
+                <!-- 上传区域 -->
+                <div class="glass-panel rounded-2xl p-6">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400">1</span>
+                        输入收款信息
+                    </h3>
+
+                    <div class="form-group mb-4">
+                        <label class="text-sm text-gray-400 mb-2 block">支付方式</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="template-card selected rounded-xl p-3 bg-gradient-to-br from-blue-600 to-blue-800 text-center" onclick="selectTemplate('alipay', this)">
+                                <div class="text-2xl mb-1">💙</div>
+                                <div class="text-xs font-bold">支付宝</div>
+                            </div>
+                            <div class="template-card rounded-xl p-3 bg-gradient-to-br from-green-600 to-green-800 text-center" onclick="selectTemplate('wechat', this)">
+                                <div class="text-2xl mb-1">💚</div>
+                                <div class="text-xs font-bold">微信</div>
+                            </div>
+                            <div class="template-card rounded-xl p-3 bg-gradient-to-br from-emerald-600 to-emerald-800 text-center" onclick="selectTemplate('usdt_trc20', this)">
+                                <div class="text-2xl mb-1">🔗</div>
+                                <div class="text-xs font-bold">USDT-TRC</div>
+                            </div>
+                            <div class="template-card rounded-xl p-3 bg-gradient-to-br from-gray-600 to-gray-800 text-center" onclick="selectTemplate('usdt_erc20', this)">
+                                <div class="text-2xl mb-1">⛓️</div>
+                                <div class="text-xs font-bold">USDT-ERC</div>
+                            </div>
+                            <div class="template-card rounded-xl p-3 bg-gradient-to-br from-red-600 to-red-800 text-center" onclick="selectTemplate('union', this)">
+                                <div class="text-2xl mb-1">❤️</div>
+                                <div class="text-xs font-bold">云闪付</div>
+                            </div>
+                            <div class="template-card rounded-xl p-3 bg-gradient-to-br from-amber-500 to-orange-700 text-center" onclick="selectTemplate('custom', this)">
+                                <div class="text-2xl mb-1">✨</div>
+                                <div class="text-xs font-bold">自定义</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label class="text-sm text-gray-400 mb-2 block">收款链接 / 钱包地址 / 文本内容</label>
+                        <textarea id="qr-content" rows="3" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-lime-500 transition" placeholder="粘贴收款链接、钱包地址或任意文本..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="text-sm text-gray-400 mb-2 block">金额（可选）</label>
+                        <input type="text" id="qr-amount" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-lime-500 transition" placeholder="例如: 100.00">
+                    </div>
+                </div>
+
+                <!-- 美化设置 -->
+                <div class="glass-panel rounded-2xl p-6">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400">2</span>
+                        样式设置
+                    </h3>
+
+                    <!-- 背景样式 -->
+                    <div class="mb-5">
+                        <label class="text-sm text-gray-400 mb-2 block">背景风格</label>
+                        <div class="flex gap-3 flex-wrap">
+                            <button onclick="setBgStyle('gradient-blue')" class="style-btn px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 text-xs font-medium">蓝色渐变</button>
+                            <button onclick="setBgStyle('gradient-purple')" class="style-btn px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-xs font-medium">紫粉渐变</button>
+                            <button onclick="setBgStyle('gradient-dark')" class="style-btn px-4 py-2 rounded-lg bg-gradient-to-r from-gray-800 to-gray-900 text-xs font-medium">暗黑商务</button>
+                            <button onclick="setBgStyle('gradient-gold')" class="style-btn px-4 py-2 rounded-lg bg-gradient-to-r from-amber-400 to-orange-600 text-xs font-medium text-black">金色奢华</button>
+                            <button onclick="setBgStyle('solid')" class="style-btn px-4 py-2 rounded-lg bg-white text-black text-xs font-medium">纯白简约</button>
+                        </div>
+                    </div>
+
+                    <!-- 颜色设置 -->
+                    <div class="mb-5">
+                        <label class="text-sm text-gray-400 mb-2 block">二维码颜色</label>
+                        <div class="flex gap-3 flex-wrap">
+                            <button onclick="setQRColor('#000000')" class="w-10 h-10 rounded-full bg-black border-2 border-white/20 hover:scale-110 transition"></button>
+                            <button onclick="setQRColor('#1677ff')" class="w-10 h-10 rounded-full bg-[#1677ff] border-2 border-white/20 hover:scale-110 transition"></button>
+                            <button onclick="setQRColor('#07c160')" class="w-10 h-10 rounded-full bg-[#07c160] border-2 border-white/20 hover:scale-110 transition"></button>
+                            <button onclick="setQRColor('#c41e3a')" class="w-10 h-10 rounded-full bg-[#c41e3a] border-2 border-white/20 hover:scale-110 transition"></button>
+                            <button onclick="setQRColor('#7c3aed')" class="w-10 h-10 rounded-full bg-[#7c3aed] border-2 border-white/20 hover:scale-110 transition"></button>
+                            <div class="color-picker-wrapper w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-yellow-500 border-2 border-white/20 hover:scale-110 transition">
+                                <input type="color" id="custom-qr-color" onchange="setQRColor(this.value)" value="#000000">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 文字设置 -->
+                    <div class="mb-5">
+                        <label class="text-sm text-gray-400 mb-2 block">收款标题</label>
+                        <input type="text" id="qr-title" value="推荐使用支付宝" 
+                               class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-lime-500 transition"
+                               oninput="updateTitle(this.value)">
+                    </div>
+
+                    <div class="mb-5">
+                        <label class="text-sm text-gray-400 mb-2 block">副标题/提示</label>
+                        <input type="text" id="qr-subtitle" value="打开支付宝[扫一扫]" 
+                               class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-lime-500 transition"
+                               oninput="updateSubtitle(this.value)">
+                    </div>
+
+                    <!-- 能量标签 -->
+                    <div class="mb-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="energy-toggle" checked onchange="toggleEnergy()" class="w-5 h-5 accent-lime-500 rounded">
+                            <span class="text-sm">显示能量标签</span>
+                            <span class="energy-badge px-2 py-0.5 rounded-full text-xs">绿色能量</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：预览与下载 -->
+            <div class="space-y-6">
+                <div class="glass-panel rounded-2xl p-6 sticky top-28">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-lg bg-lime-500/20 flex items-center justify-center text-lime-400">3</span>
+                        实时预览
+                    </h3>
+
+                    <div class="flex justify-center mb-6">
+                        <div id="qr-preview-container" class="qr-container">
+                            <canvas id="main-canvas" width="400" height="600" class="rounded-2xl shadow-2xl"></canvas>
+                            <div class="corner-decoration corner-tl"></div>
+                            <div class="corner-decoration corner-tr"></div>
+                            <div class="corner-decoration corner-bl"></div>
+                            <div class="corner-decoration corner-br"></div>
+                            <div class="scan-line rounded-2xl"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="downloadQR('png')" class="download-btn py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            下载 PNG
+                        </button>
+                        <button onclick="downloadQR('jpg')" class="bg-white/10 hover:bg-white/20 py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            下载 JPG
+                        </button>
+                    </div>
+
+                    <div class="mt-4 p-4 rounded-xl bg-lime-500/10 border border-lime-500/20">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-2 h-2 rounded-full bg-lime-500 pulse-ring"></div>
+                            <span class="text-sm font-bold text-lime-400">多人同时扫码就绪</span>
+                        </div>
+                        <p class="text-xs text-gray-400">生成的二维码支持多人同时扫描，各自跳转对应支付页面</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- ===== 批量生成模式 ===== -->
-        <div class="mode-content" id="mode-batch">
-            <div class="glass-card batch-card">
-                <h3>批量生成不同风格的收款码</h3>
-                <p class="sub-text">输入收款信息，一次性生成多种风格版本</p>
+        <!-- 聚合能量码模式 -->
+        <div id="mode-multi" class="hidden">
+            <div class="glass-panel rounded-2xl p-6 mb-6">
+                <h3 class="text-lg font-bold mb-4">输入多个收款信息生成聚合能量码</h3>
+                <p class="text-sm text-gray-400 mb-4">支持同时输入多个支付平台的收款信息，生成统一的聚合码</p>
 
-                <div class="batch-input">
-                    <div class="form-group">
-                        <label>收款链接 / 地址</label>
-                        <input type="text" id="batch-data" class="glass-input" placeholder="粘贴收款链接或钱包地址">
+                <div class="grid md:grid-cols-3 gap-4 mb-6">
+                    <div class="glass-panel rounded-xl p-4 border-2 border-blue-500/30">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="payment-tag tag-alipay">支付宝</span>
+                        </div>
+                        <input type="text" id="multi-alipay" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-lime-500 transition text-sm" placeholder="支付宝收款链接">
                     </div>
-                    <div class="form-group">
-                        <label>支付方式</label>
-                        <select id="batch-method" class="glass-input">
-                            <option value="alipay">支付宝</option>
-                            <option value="wechat">微信支付</option>
-                            <option value="usdt_trc20">USDT-TRC20</option>
-                            <option value="usdt_erc20">USDT-ERC20</option>
-                        </select>
+
+                    <div class="glass-panel rounded-xl p-4 border-2 border-green-500/30">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="payment-tag tag-wechat">微信支付</span>
+                        </div>
+                        <input type="text" id="multi-wechat" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-lime-500 transition text-sm" placeholder="微信收款链接">
                     </div>
-                    <button id="generate-batch-btn" class="btn-primary btn-glow">
-                        <span>📦</span> 批量生成
+
+                    <div class="glass-panel rounded-xl p-4 border-2 border-emerald-500/30">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="payment-tag tag-trc">USDT-TRC20</span>
+                        </div>
+                        <input type="text" id="multi-trc" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-lime-500 transition text-sm" placeholder="TRC20钱包地址">
+                    </div>
+
+                    <div class="glass-panel rounded-xl p-4 border-2 border-gray-500/30">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="payment-tag tag-erc">USDT-ERC20</span>
+                        </div>
+                        <input type="text" id="multi-erc" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-lime-500 transition text-sm" placeholder="ERC20钱包地址">
+                    </div>
+
+                    <div class="glass-panel rounded-xl p-4 border-2 border-red-500/30">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="payment-tag tag-union">云闪付</span>
+                        </div>
+                        <input type="text" id="multi-union" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-lime-500 transition text-sm" placeholder="云闪付收款链接">
+                    </div>
+                </div>
+
+                <div class="flex justify-center">
+                    <button onclick="generateMultiQR()" class="download-btn px-8 py-3 rounded-xl font-bold text-white">
+                        生成聚合能量码
+                    </button>
+                </div>
+            </div>
+
+            <div id="multi-result" class="hidden glass-panel rounded-2xl p-6">
+                <h3 class="text-lg font-bold mb-4 text-center">聚合能量码预览</h3>
+                <div class="flex justify-center">
+                    <canvas id="multi-canvas" width="800" height="1000" class="rounded-2xl shadow-2xl"></canvas>
+                </div>
+                <div class="flex justify-center gap-3 mt-6">
+                    <button onclick="downloadMultiQR('png')" class="download-btn px-6 py-2 rounded-xl font-bold">下载 PNG</button>
+                    <button onclick="downloadMultiQR('jpg')" class="bg-white/10 hover:bg-white/20 px-6 py-2 rounded-xl font-bold transition">下载 JPG</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 批量生成模式 -->
+        <div id="mode-batch" class="hidden">
+            <div class="glass-panel rounded-2xl p-6 mb-6">
+                <h3 class="text-lg font-bold mb-4">批量生成不同风格的收款码</h3>
+                <p class="text-sm text-gray-400 mb-4">输入收款信息，一次性生成多种风格版本</p>
+
+                <div class="batch-input mb-6">
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="text-sm text-gray-400 mb-2 block">收款链接 / 地址</label>
+                            <input type="text" id="batch-data" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-lime-500 transition" placeholder="粘贴收款链接或钱包地址">
+                        </div>
+                        <div>
+                            <label class="text-sm text-gray-400 mb-2 block">支付方式</label>
+                            <select id="batch-method" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-lime-500 transition">
+                                <option value="alipay" class="bg-gray-800">支付宝</option>
+                                <option value="wechat" class="bg-gray-800">微信支付</option>
+                                <option value="usdt_trc20" class="bg-gray-800">USDT-TRC20</option>
+                                <option value="usdt_erc20" class="bg-gray-800">USDT-ERC20</option>
+                                <option value="union" class="bg-gray-800">云闪付</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="generateBatch()" class="download-btn px-8 py-3 rounded-xl font-bold text-white w-full">
+                        批量生成
                     </button>
                 </div>
 
-                <div id="batch-results" class="batch-grid" style="display:none;"></div>
+                <div id="batch-results" class="hidden multi-qr-grid"></div>
             </div>
         </div>
 
     </main>
 
-    <!-- 加载动画 -->
-    <div id="loading" class="loading-overlay" style="display:none;">
-        <div class="loading-card">
-            <div class="spinner-energy">
-                <div class="ring"></div>
-                <div class="ring"></div>
-                <div class="ring"></div>
+    <!-- 帮助弹窗 -->
+    <div id="help-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="glass-panel rounded-2xl p-8 max-w-lg mx-4 max-h-[80vh] overflow-y-auto">
+            <h2 class="text-2xl font-bold mb-4">使用说明</h2>
+            <div class="space-y-4 text-sm text-gray-300">
+                <div>
+                    <h4 class="font-bold text-white mb-1">📝 输入收款信息</h4>
+                    <p>选择支付方式，粘贴收款链接、钱包地址或任意文本内容。</p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-white mb-1">🎨 美化样式</h4>
+                    <p>选择模板、调整颜色、修改文字，实时预览效果。</p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-white mb-1">⚡ 能量标签</h4>
+                    <p>绿色能量标签增加真实感和吸引力。</p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-white mb-1">🔗 一码多付</h4>
+                    <p>聚合能量码模式可将多个支付平台的收款码合并到一张图中。</p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-white mb-1">⚠️ 注意事项</h4>
+                    <p>本工具仅用于二维码美化，不涉及任何支付API调用。支付安全由支付平台保障。</p>
+                </div>
             </div>
-            <p>正在生成能量码...</p>
+            <button onclick="closeHelp()" class="mt-6 w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 font-bold transition">关闭</button>
         </div>
     </div>
 
