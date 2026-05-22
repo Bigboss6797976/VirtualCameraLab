@@ -10,20 +10,36 @@ const mimeTypes = {
     '.css': 'text/css',
     '.png': 'image/png',
     '.jpg': 'image/jpg',
-    '.svg': 'image/svg+xml'
+    '.svg': 'image/svg+xml',
+    '.ico': 'image/x-icon'
 };
 
 const server = http.createServer((req, res) => {
     let filePath = '.' + req.url;
-    if (filePath === './') filePath = './ant_energy_qr_generator_v4.html';
-    
+    if (filePath === './') {
+        filePath = './index.html';
+    }
+
     const extname = String(path.extname(filePath)).toLowerCase();
     const contentType = mimeTypes[extname] || 'application/octet-stream';
 
     fs.readFile(filePath, (error, content) => {
         if (error) {
-            res.writeHead(404);
-            res.end('<h1>404</h1>');
+            if (error.code === 'ENOENT') {
+                // 如果文件不存在，尝试返回 index.html（单页应用路由）
+                fs.readFile('./index.html', (err, indexContent) => {
+                    if (err) {
+                        res.writeHead(404);
+                        res.end('Not Found');
+                    } else {
+                        res.writeHead(200, { 'Content-Type': 'text/html' });
+                        res.end(indexContent, 'utf-8');
+                    }
+                });
+            } else {
+                res.writeHead(500);
+                res.end('Server Error');
+            }
         } else {
             res.writeHead(200, { 'Content-Type': contentType });
             res.end(content, 'utf-8');
