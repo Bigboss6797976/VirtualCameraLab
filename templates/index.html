@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>能量码生成器 - 一码多付 · 美化收款</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="gradient-bg">
+    <!-- 浮动粒子背景 -->
+    <div id="particles"></div>
+
+    <!-- 头部 -->
+    <header class="glass-header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">⚡</div>
+                <div class="logo-text">
+                    <h1>能量码生成器</h1>
+                    <p>一码多付 · 智能美化 · 即时可用</p>
+                </div>
+            </div>
+            <div class="version-badge">v3.0</div>
+        </div>
+    </header>
+
+    <!-- 主内容 -->
+    <main class="main-container">
+
+        <!-- 模式切换 -->
+        <div class="mode-switch">
+            <button class="mode-btn active" data-mode="single">
+                <span class="mode-icon">🎯</span>单码美化
+            </button>
+            <button class="mode-btn" data-mode="multi">
+                <span class="mode-icon">🎲</span>聚合能量码
+            </button>
+            <button class="mode-btn" data-mode="batch">
+                <span class="mode-icon">📦</span>批量生成
+            </button>
+        </div>
+
+        <!-- ===== 单码美化模式 ===== -->
+        <div class="mode-content active" id="mode-single">
+            <div class="layout-grid">
+
+                <!-- 左侧：输入与设置 -->
+                <div class="left-panel">
+
+                    <!-- 支付信息 -->
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <span class="step-num">1</span>
+                            <h3>支付信息</h3>
+                        </div>
+
+                        <div class="form-group">
+                            <label>支付方式</label>
+                            <div class="method-grid">
+                                <div class="method-item active" data-method="alipay">
+                                    <div class="method-color" style="background:#1677FF"></div>
+                                    <span>支付宝</span>
+                                </div>
+                                <div class="method-item" data-method="wechat">
+                                    <div class="method-color" style="background:#07C160"></div>
+                                    <span>微信</span>
+                                </div>
+                                <div class="method-item" data-method="usdt_trc20">
+                                    <div class="method-color" style="background:#26A17B"></div>
+                                    <span>USDT-TRC20</span>
+                                </div>
+                                <div class="method-item" data-method="usdt_erc20">
+                                    <div class="method-color" style="background:#3C3C3D"></div>
+                                    <span>USDT-ERC20</span>
+                                </div>
+                                <div class="method-item" data-method="union">
+                                    <div class="method-color" style="background:#C41E3A"></div>
+                                    <span>云闪付</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>收款链接 / 钱包地址</label>
+                            <textarea id="single-data" class="glass-input" rows="3" placeholder="粘贴支付宝收款链接、微信收款码URL或USDT钱包地址..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>金额（可选）</label>
+                            <input type="text" id="amount" class="glass-input" placeholder="例如: 100.00">
+                        </div>
+                    </div>
+
+                    <!-- 样式设置 -->
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <span class="step-num">2</span>
+                            <h3>样式设置</h3>
+                        </div>
+
+                        <div class="form-group">
+                            <label>背景风格</label>
+                            <div class="style-grid">
+                                <div class="style-item active" data-style="gradient-blue">
+                                    <div class="style-preview" style="background:linear-gradient(135deg,#1677ff,#0056d6)"></div>
+                                    <span>蓝色渐变</span>
+                                </div>
+                                <div class="style-item" data-style="gradient-purple">
+                                    <div class="style-preview" style="background:linear-gradient(135deg,#7c3aed,#db2777)"></div>
+                                    <span>紫粉渐变</span>
+                                </div>
+                                <div class="style-item" data-style="gradient-dark">
+                                    <div class="style-preview" style="background:linear-gradient(135deg,#1f2937,#111827)"></div>
+                                    <span>暗黑商务</span>
+                                </div>
+                                <div class="style-item" data-style="gradient-gold">
+                                    <div class="style-preview" style="background:linear-gradient(135deg,#fbbf24,#d97706)"></div>
+                                    <span>金色奢华</span>
+                                </div>
+                                <div class="style-item" data-style="solid">
+                                    <div class="style-preview" style="background:#ffffff;border:1px solid #ddd"></div>
+                                    <span>纯白简约</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>二维码颜色</label>
+                            <div class="color-row">
+                                <div class="color-dot active" data-color="#000000" style="background:#000"></div>
+                                <div class="color-dot" data-color="#1677ff" style="background:#1677ff"></div>
+                                <div class="color-dot" data-color="#07c160" style="background:#07c160"></div>
+                                <div class="color-dot" data-color="#c41e3a" style="background:#c41e3a"></div>
+                                <div class="color-dot" data-color="#7c3aed" style="background:#7c3aed"></div>
+                                <input type="color" id="custom-qr-color" value="#000000" class="color-picker">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>收款标题</label>
+                            <input type="text" id="qr-title" class="glass-input" value="推荐使用支付宝" placeholder="收款标题">
+                        </div>
+
+                        <div class="form-group">
+                            <label>副标题</label>
+                            <input type="text" id="qr-subtitle" class="glass-input" value="打开支付宝[扫一扫]" placeholder="副标题提示">
+                        </div>
+
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="energy-toggle" checked>
+                                <span class="checkmark"></span>
+                                <span>显示能量标签</span>
+                                <span class="energy-tag">绿色能量</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧：预览与下载 -->
+                <div class="right-panel">
+                    <div class="glass-card sticky-card">
+                        <div class="card-header">
+                            <span class="step-num">3</span>
+                            <h3>实时预览</h3>
+                        </div>
+
+                        <div class="preview-area">
+                            <div id="qr-preview-container" class="qr-container">
+                                <div id="preview-placeholder">
+                                    <div class="placeholder-icon">📱</div>
+                                    <p>点击「生成能量码」查看效果</p>
+                                </div>
+                                <img id="preview-img" class="qr-image" style="display:none;" alt="QR Preview">
+                                <div class="corner-decoration corner-tl"></div>
+                                <div class="corner-decoration corner-tr"></div>
+                                <div class="corner-decoration corner-bl"></div>
+                                <div class="corner-decoration corner-br"></div>
+                                <div class="scan-line"></div>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button id="generate-btn" class="btn-primary btn-glow">
+                                <span>⚡</span> 生成能量码
+                            </button>
+                            <button id="download-btn" class="btn-download" style="display:none;">
+                                <span>⬇️</span> 下载 PNG
+                            </button>
+                        </div>
+
+                        <div class="energy-status">
+                            <div class="pulse-dot"></div>
+                            <span>多人同时扫码就绪</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 聚合能量码模式 ===== -->
+        <div class="mode-content" id="mode-multi">
+            <div class="glass-card multi-card">
+                <h3>上传多个收款码生成聚合能量码</h3>
+                <p class="sub-text">支持同时上传多个支付平台的收款码，生成统一的聚合码</p>
+
+                <div class="multi-upload-grid">
+                    <div class="upload-box" data-type="alipay">
+                        <div class="upload-tag tag-alipay">支付宝</div>
+                        <div class="upload-zone">
+                            <input type="text" class="glass-input" data-multi="alipay" placeholder="粘贴支付宝收款链接">
+                        </div>
+                    </div>
+                    <div class="upload-box" data-type="wechat">
+                        <div class="upload-tag tag-wechat">微信支付</div>
+                        <div class="upload-zone">
+                            <input type="text" class="glass-input" data-multi="wechat" placeholder="粘贴微信收款链接">
+                        </div>
+                    </div>
+                    <div class="upload-box" data-type="usdt_trc20">
+                        <div class="upload-tag tag-trc">USDT-TRC20</div>
+                        <div class="upload-zone">
+                            <input type="text" class="glass-input" data-multi="usdt_trc20" placeholder="粘贴TRC20钱包地址">
+                        </div>
+                    </div>
+                    <div class="upload-box" data-type="usdt_erc20">
+                        <div class="upload-tag tag-erc">USDT-ERC20</div>
+                        <div class="upload-zone">
+                            <input type="text" class="glass-input" data-multi="usdt_erc20" placeholder="粘贴ERC20钱包地址">
+                        </div>
+                    </div>
+                </div>
+
+                <button id="generate-multi-btn" class="btn-primary btn-glow">
+                    <span>🎲</span> 生成聚合能量码
+                </button>
+
+                <div id="multi-preview" class="multi-preview-area" style="display:none;">
+                    <div id="multi-grid" class="multi-grid"></div>
+                    <button id="download-multi-btn" class="btn-download">
+                        <span>📦</span> 批量下载
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 批量生成模式 ===== -->
+        <div class="mode-content" id="mode-batch">
+            <div class="glass-card batch-card">
+                <h3>批量生成不同风格的收款码</h3>
+                <p class="sub-text">输入收款信息，一次性生成多种风格版本</p>
+
+                <div class="batch-input">
+                    <div class="form-group">
+                        <label>收款链接 / 地址</label>
+                        <input type="text" id="batch-data" class="glass-input" placeholder="粘贴收款链接或钱包地址">
+                    </div>
+                    <div class="form-group">
+                        <label>支付方式</label>
+                        <select id="batch-method" class="glass-input">
+                            <option value="alipay">支付宝</option>
+                            <option value="wechat">微信支付</option>
+                            <option value="usdt_trc20">USDT-TRC20</option>
+                            <option value="usdt_erc20">USDT-ERC20</option>
+                        </select>
+                    </div>
+                    <button id="generate-batch-btn" class="btn-primary btn-glow">
+                        <span>📦</span> 批量生成
+                    </button>
+                </div>
+
+                <div id="batch-results" class="batch-grid" style="display:none;"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 加载动画 -->
+    <div id="loading" class="loading-overlay" style="display:none;">
+        <div class="loading-card">
+            <div class="spinner-energy">
+                <div class="ring"></div>
+                <div class="ring"></div>
+                <div class="ring"></div>
+            </div>
+            <p>正在生成能量码...</p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
