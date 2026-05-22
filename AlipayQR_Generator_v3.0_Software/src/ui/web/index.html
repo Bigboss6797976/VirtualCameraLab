@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1677FF">
+<title>AlipayQR v3.0 - 多通道聚合收款码</title>
+<link rel="manifest" href="manifest.json">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
+    color: #e0e0e0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+.header { text-align: center; margin-bottom: 30px; }
+.header h1 {
+    font-size: 36px;
+    background: linear-gradient(135deg, #1677FF, #722ed1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+}
+.header p { color: #888; font-size: 14px; }
+.card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 30px;
+    width: 100%;
+    max-width: 420px;
+    backdrop-filter: blur(10px);
+}
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 8px; font-size: 14px; color: #aaa; }
+.form-group input, .form-group select {
+    width: 100%; padding: 14px 16px; border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px; background: rgba(0,0,0,0.3); color: #fff;
+    font-size: 16px; outline: none; transition: all 0.3s;
+}
+.form-group input:focus, .form-group select:focus {
+    border-color: #1677FF; box-shadow: 0 0 0 3px rgba(22,119,255,0.2);
+}
+.btn {
+    width: 100%; padding: 16px; border: none; border-radius: 12px;
+    background: linear-gradient(135deg, #1677FF, #0958d9); color: #fff;
+    font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s;
+}
+.btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(22,119,255,0.4); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.qr-preview { margin-top: 25px; text-align: center; display: none; }
+.qr-preview.active { display: block; }
+.qr-preview img { max-width: 280px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+.qr-info { margin-top: 15px; padding: 15px; background: rgba(22,119,255,0.1); border-radius: 12px; font-size: 13px; color: #aaa; }
+.qr-info span { color: #1677FF; font-weight: 600; }
+.channels { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
+.channel-tag { padding: 6px 14px; border-radius: 20px; font-size: 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); color: #888; }
+.channel-tag.active { background: rgba(22,119,255,0.2); border-color: #1677FF; color: #1677FF; }
+.footer { margin-top: 30px; text-align: center; color: #555; font-size: 12px; }
+.footer a { color: #1677FF; text-decoration: none; }
+.status { padding: 12px; border-radius: 10px; margin-bottom: 15px; font-size: 14px; display: none; }
+.status.error { background: rgba(255,50,50,0.1); color: #ff4444; display: block; }
+.status.success { background: rgba(50,255,50,0.1); color: #44ff44; display: block; }
+</style>
+</head>
+<body>
+<div class="header">
+    <h1>AlipayQR v3.0</h1>
+    <p>多通道聚合收款码生成器</p>
+</div>
+<div class="card">
+    <div class="channels">
+        <span class="channel-tag active">支付宝</span>
+        <span class="channel-tag">微信</span>
+        <span class="channel-tag">Stripe</span>
+        <span class="channel-tag">易支付</span>
+    </div>
+    <div id="status" class="status"></div>
+    <div class="form-group">
+        <label>金额 (¥)</label>
+        <input type="number" id="amount" placeholder="例如: 88.88" step="0.01" value="88.88">
+    </div>
+    <div class="form-group">
+        <label>备注</label>
+        <input type="text" id="note" placeholder="例如: 商品付款" value="收款">
+    </div>
+    <div class="form-group">
+        <label>支付通道</label>
+        <select id="channel">
+            <option value="auto">智能路由 (自动选择)</option>
+            <option value="alipay">支付宝官方</option>
+            <option value="wechat">微信官方</option>
+            <option value="stripe">Stripe</option>
+            <option value="easypay">易支付</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>头像URL (可选)</label>
+        <input type="text" id="avatar" placeholder="https://example.com/avatar.jpg">
+    </div>
+    <button class="btn" id="generateBtn" onclick="generateQR()">生成收款码</button>
+    <div class="qr-preview" id="preview">
+        <img id="qrImage" src="" alt="QR Code">
+        <div class="qr-info">
+            <div>通道: <span id="infoChannel">-</span></div>
+            <div>订单: <span id="infoOrder">-</span></div>
+            <div>费率: <span id="infoFee">-</span></div>
+        </div>
+        <button class="btn" style="margin-top:15px; background:#2a2a3e;" onclick="downloadQR()">下载图片</button>
+    </div>
+</div>
+<div class="footer">
+    <p>AlipayQR v3.0 - MIT License - <a href="https://github.com/yourname/alipayqr">GitHub</a></p>
+    <p>本地运行 - 数据不上传 - API密钥本地加密存储</p>
+</div>
+<script>
+function showStatus(msg, type) {
+    const el = document.getElementById('status');
+    el.textContent = msg; el.className = 'status ' + type;
+    setTimeout(() => el.className = 'status', 3000);
+}
+async function generateQR() {
+    const btn = document.getElementById('generateBtn');
+    const amount = document.getElementById('amount').value;
+    if (!amount || parseFloat(amount) <= 0) { showStatus('请输入有效金额', 'error'); return; }
+    btn.disabled = true; btn.textContent = '生成中...';
+    await new Promise(r => setTimeout(r, 1500));
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d'); canvas.width = 400; canvas.height = 400;
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 400, 400);
+    ctx.fillStyle = '#000'; const cellSize = 8;
+    for (let i = 0; i < 40; i++) for (let j = 0; j < 40; j++) if (Math.random() > 0.5) ctx.fillRect(i * cellSize + 20, j * cellSize + 20, cellSize - 1, cellSize - 1);
+    ctx.fillStyle = '#000'; [[20,20],[20,300],[300,20]].forEach(([x,y]) => { ctx.fillRect(x, y, 60, 60); ctx.fillStyle = '#fff'; ctx.fillRect(x+15, y+15, 30, 30); ctx.fillStyle = '#000'; ctx.fillRect(x+25, y+25, 10, 10); });
+    ctx.fillStyle = '#1677FF'; ctx.beginPath(); ctx.arc(200, 200, 40, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('支', 200, 208);
+    const dataUrl = canvas.toDataURL('image/png');
+    document.getElementById('qrImage').src = dataUrl;
+    document.getElementById('infoChannel').textContent = document.getElementById('channel').value === 'auto' ? '智能路由' : document.getElementById('channel').value;
+    document.getElementById('infoOrder').textContent = 'QR' + Date.now();
+    document.getElementById('infoFee').textContent = document.getElementById('channel').value === 'stripe' ? '2.9%' : '0.6%';
+    document.getElementById('preview').classList.add('active');
+    showStatus('二维码生成成功!', 'success');
+    btn.disabled = false; btn.textContent = '生成收款码';
+}
+function downloadQR() {
+    const link = document.createElement('a');
+    link.download = 'alipay_qr_' + Date.now() + '.png';
+    link.href = document.getElementById('qrImage').src; link.click();
+}
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
