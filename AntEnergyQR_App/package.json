@@ -1,0 +1,15 @@
+{
+  "name": "ant-energy-qr-app",
+  "displayName": "蚂蚁能量收款码",
+  "version": "4.0.0",
+  "description": "智能提取收款二维码，官方模板美化",
+  "main": "index.js",
+  "cordova": {
+    "plugins": {
+      "cordova-plugin-whitelist": {},
+      "cordova-plugin-statusbar": {},
+      "cordova-plugin-file": {}
+    },
+    "platforms": ["android"]
+  }
+}
