@@ -1,0 +1,14 @@
+{
+  "name": "energy-code-generator",
+  "version": "3.1.0",
+  "description": "能量码生成器增强版",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "canvas": "^2.11.2",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1"
+  }
+}
