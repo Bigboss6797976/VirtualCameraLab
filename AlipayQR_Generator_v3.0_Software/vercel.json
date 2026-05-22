@@ -1,7 +1,0 @@
-{
-  "version": 2,
-  "name": "alipayqr",
-  "builds": [{"src": "src/ui/web/index.html", "use": "@vercel/static"}],
-  "routes": [{"src": "/(.*)", "dest": "/src/ui/web/$1"}],
-  "headers": [{"source": "/(.*)", "headers": [{"key": "Cache-Control", "value": "public, max-age=0, must-revalidate"}]}]
-}
