@@ -2,91 +2,165 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>能量码生成器 v3.1 (增强版) - HD科技</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>高级能量码全功能生成器 v3.1 - HD科技</title>
     <style>
-        :root { --bg-color: #1a1b26; --panel-bg: #24283b; --text-color: #c0caf5; --accent-color: #7aa2f7; }
-        body { background-color: var(--bg-color); color: var(--text-color); font-family: -apple-system, sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { display: flex; flex-wrap: wrap; gap: 20px; max-width: 1000px; width: 100%; justify-content: center; }
-        .panel { background: var(--panel-bg); padding: 20px; border-radius: 12px; flex: 1; min-width: 300px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        .preview-panel { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 350px; }
-        h2 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid #3b4261; padding-bottom: 10px; }
-        .form-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px; }
-        label { font-size: 14px; font-weight: bold; }
-        input, select { background: #1f2335; border: 1px solid #3b4261; color: #fff; padding: 10px; border-radius: 6px; }
-        input[type="range"] { padding: 0; }
-        .btn { background: #41a6b5; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; text-align: center; margin-top: 10px; }
-        .btn:hover { background: #3196a5; }
-        .btn-danger { background: #f7768e; }
-        .btn-danger:hover { background: #e06881; }
-        .btn-group { display: flex; gap: 10px; width: 100%; }
-        .btn-group .btn { flex: 1; }
-        canvas { max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); background: #fff; }
+        :root { --bg-color: #0b0e14; --panel-bg: #1a1f2c; --text-color: #abb2bf; --accent-color: #1677ff; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        
+        body { background-color: var(--bg-color); color: var(--text-color); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 12px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        h1 { color: #fff; font-size: 20px; margin: 10px 0 15px 0; font-weight: 600; text-align: center; }
+        
+        .container { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 1200px; justify-content: center; }
+        .panel { background: var(--panel-bg); padding: 20px; border-radius: 16px; width: 100%; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+        .preview-panel { display: flex; flex-direction: column; align-items: center; }
+        
+        h2 { color: #fff; font-size: 15px; margin-bottom: 14px; border-bottom: 1px solid #2e374a; padding-bottom: 8px; font-weight: 600; }
+        
+        /* 响应式：电脑端并排，苹果/安卓端堆叠 */
+        @media (min-width: 768px) {
+            body { padding: 24px; }
+            h1 { font-size: 24px; margin-bottom: 25px; }
+            .container { flex-direction: row; align-items: flex-start; }
+            .panel { flex: 1; min-width: 400px; padding: 24px; }
+            .preview-panel { position: sticky; top: 24px; max-width: 450px; }
+        }
+
+        .form-group { margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px; }
+        .label-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        label { font-size: 13px; font-weight: 600; color: #8a95a5; }
+        
+        /* 交互组件适配 */
+        .drop-zone { background: #11141e; border: 2px dashed #3b455c; color: #8a95a5; padding: 20px; border-radius: 8px; text-align: center; cursor: pointer; font-size: 13px; transition: 0.2s; }
+        .drop-zone:hover { border-color: var(--accent-color); color: #fff; }
+        
+        select, input[type="text"] { background: #11141e; border: 1px solid #2e374a; color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; width: 100%; outline: none; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1xl 1xl; gap: 10px; }
+        @media (min-width: 400px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
+
+        input[type="range"] { background: #11141e; border: 1px solid #2e374a; height: 38px; padding: 0 10px; border-radius: 8px; width: 100%; -webkit-appearance: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%; background: var(--accent-color); cursor: pointer; }
+        
+        /* 开关组件 */
+        .switch-row { display: flex; align-items: center; justify-content: space-between; background: #11141e; padding: 10px; border-radius: 8px; border: 1px solid #2e374a; }
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #3b455c; transition: .3s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--accent-color); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .btn { background: var(--accent-color); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; width: 100%; margin-top: 10px; }
+        .btn-danger { background: #ff4d4f; padding: 4px 8px; font-size: 11px; border-radius: 4px; border: none; color: #fff; cursor: pointer; }
+
+        .canvas-container { position: relative; width: 100%; max-width: 360px; border-radius: 14px; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.5); margin: 15px 0; }
+        canvas { width: 100%; height: auto; display: block; background: #fff; }
     </style>
 </head>
 <body>
 
-<h1>能量码生成器 v3.1 (增强版)</h1>
+<h1>能量码全功能生成器 v3.1</h1>
 <div class="container">
     <div class="panel">
-        <h2>参数配置</h2>
+        <h2>1. 基础资源上传</h2>
+        <div class="form-group">
+            <div class="label-row"><label>二维码图片 (支持拖拽/点击)</label><button class="btn-danger" onclick="clearFile('qr')">清除</button></div>
+            <div class="drop-zone" id="qrZone" onclick="document.getElementById('qrInput').click()">点击或拖拽二维码到这里</div>
+            <input type="file" id="qrInput" accept="image/*" style="display:none">
+        </div>
+        <div class="form-group">
+            <div class="label-row"><label>头像图片叠加</label><button class="btn-danger" onclick="clearFile('avatar')">清除</button></div>
+            <div class="drop-zone" id="avatarZone" onclick="document.getElementById('avatarInput').click()">点击或拖拽头像到这里</div>
+            <input type="file" id="avatarInput" accept="image/*" style="display:none">
+        </div>
+
+        <h2>2. 视觉色彩与外观设置</h2>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>二维码主色</label>
+                <select id="qrColor">
+                    <option value="#4682B4">钢青 (Steel Blue)</option>
+                    <option value="#DFFF00">酸黄 (Acid Yellow)</option>
+                    <option value="#00FFFF">青色 (Cyan)</option>
+                    <option value="#FFFFFF" selected>白色 (White)</option>
+                    <option value="#FF0000">红色 (Red)</option>
+                    <option value="#11141e">深色 (Dark)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>背景颜色</label>
+                <select id="bgColor">
+                    <option value="#1677ff" selected>经典蓝</option>
+                    <option value="#2e374a">暗黑灰</option>
+                    <option value="#52b324">森林绿</option>
+                    <option value="#ff4d4f">活力红</option>
+                    <option value="#e6a23c">警告橙</option>
+                    <option value="#0b0e14">极夜黑</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label>边框宽度 (0-24px)</label>
+                <input type="range" id="borderWidth" min="0" max="24" value="12">
+            </div>
+            <div class="form-group">
+                <label>圆角大小 (0-32px)</label>
+                <input type="range" id="borderRadius" min="0" max="32" value="20">
+            </div>
+        </div>
+
+        <h2>3. 头像与金额高级微调</h2>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>头像尺寸调节</label>
+                <input type="range" id="avatarSize" min="100" max="240" value="160">
+            </div>
+            <div class="form-group">
+                <label>头像垂直位置偏移</label>
+                <input type="range" id="avatarYOffset" min="-100" max="100" value="0">
+            </div>
+        </div>
+
+        <div class="form-group switch-row">
+            <label>开启金额标注</label>
+            <label class="switch"><input type="checkbox" id="amountToggle"><span class="slider"></span></label>
+        </div>
         
-        <div class="form-group">
-            <label>1. 上传收款二维码 (JPG/PNG/WEBP)</label>
-            <input type="file" id="qrInput" accept="image/*">
-            <button class="btn btn-danger" style="padding: 4px; font-size: 12px;" onclick="clearFile('qrInput')">清除码</button>
+        <div id="amountPanel" style="display:none" class="grid-2">
+            <div class="form-group">
+                <label>货币符号</label>
+                <select id="currency">
+                    <option value="¥">¥ (RMB)</option>
+                    <option value="$">$ (USD)</option>
+                    <option value="€">€ (EUR)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>具体金额</label>
+                <input type="text" id="amountVal" value="8.88" placeholder="输入金额">
+            </div>
         </div>
 
-        <div class="form-group">
-            <label>2. 自定义中心头像 / Logo</label>
-            <input type="file" id="avatarInput" accept="image/*">
-            <button class="btn btn-danger" style="padding: 4px; font-size: 12px;" onclick="clearFile('avatarInput')">清除头像</button>
-        </div>
-
-        <div class="form-group">
-            <label>头像大小缩放 (px)</label>
-            <input type="range" id="avatarSize" min="40" max="140" value="80">
-        </div>
-
-        <div class="form-group">
-            <label>二维码主题色</label>
-            <select id="qrColor">
-                <option value="#4682B4">钢青 (Steel Blue)</option>
-                <option value="#D1E231">酸黄 (Acid Yellow)</option>
-                <option value="#00FFFF">青色 (Cyan)</option>
-                <option value="#FFFFFF" selected>白色 (White)</option>
-                <option value="#FF0000">红色 (Red)</option>
-                <option value="#1A1B26">深色 (Dark)</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label>边框宽度 (px)</label>
-            <input type="range" id="borderWidth" min="0" max="24" value="10">
-        </div>
-
-        <div class="form-group">
-            <label>圆角大小 (px)</label>
-            <input type="range" id="borderRadius" min="0" max="32" value="20">
-        </div>
-
+        <h2>4. 导出控制</h2>
         <div class="form-group">
             <label>输出尺寸选择</label>
             <select id="outputSize">
-                <option value="800">标准 (800px)</option>
-                <option value="1200" selected>高清 (1200px)</option>
-                <option value="2000">超清 (2000px)</option>
+                <option value="800">标准 800px</option>
+                <option value="1200" selected>高清 1200px</option>
+                <option value="2000">超清 2000px</option>
             </select>
         </div>
     </div>
 
     <div class="panel preview-panel">
-        <h2>4. Live Preview</h2>
-        <canvas id="mainCanvas"></canvas>
-        <div class="btn-group">
-            <button class="btn" onclick="downloadImage('png')">Download PNG</button>
-            <button class="btn" style="background:#565f89;" onclick="downloadImage('jpeg')">Download JPG</button>
+        <h2>2. 效果实时预览</h2>
+        <div class="canvas-container">
+            <canvas id="mainCanvas"></canvas>
         </div>
+        <button class="btn" onclick="downloadImage()">一键高清下载 PNG</button>
     </div>
 </div>
 
@@ -94,134 +168,132 @@
     const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d');
 
-    let qrImage = null;
-    let avatarImage = null;
+    let qrImage = null, avatarImage = null;
 
-    const qrInput = document.getElementById('qrInput');
-    const avatarInput = document.getElementById('avatarInput');
-    const avatarSizeCtrl = document.getElementById('avatarSize');
-    const qrColorCtrl = document.getElementById('qrColor');
-    const borderWidthCtrl = document.getElementById('borderWidth');
-    const borderRadiusCtrl = document.getElementById('borderRadius');
-    const outputSizeCtrl = document.getElementById('outputSize');
+    // 获取DOM节点
+    const inputs = ['qrColor','bgColor','borderWidth','borderRadius','avatarSize','avatarYOffset','amountToggle','currency','amountVal','outputSize'];
+    const ctrl = {}; inputs.forEach(id => ctrl[id] = document.getElementById(id));
 
-    [avatarSizeCtrl, qrColorCtrl, borderWidthCtrl, borderRadiusCtrl, outputSizeCtrl].forEach(ctrl => {
-        ctrl.addEventListener('input', render);
+    // 事件绑定
+    inputs.forEach(id => ctrl[id].addEventListener('input', render));
+    ctrl.amountToggle.addEventListener('change', () => {
+        document.getElementById('amountPanel').style.display = ctrl.amountToggle.checked ? 'grid' : 'none';
+        render();
     });
 
-    qrInput.addEventListener('change', (e) => handleFile(e, img => { qrImage = img; render(); }));
-    avatarInput.addEventListener('change', (e) => handleFile(e, img => { avatarImage = img; render(); }));
+    // 拖拽上传核心逻辑
+    setupDropZone('qrZone', 'qrInput', img => { qrImage = img; render(); });
+    setupDropZone('avatarZone', 'avatarInput', img => { avatarImage = img; render(); });
 
-    function handleFile(e, callback) {
-        const file = e.target.files[0];
-        if (!file) return;
+    function setupDropZone(zoneId, inputId, callback) {
+        const zone = document.getElementById(zoneId);
+        const input = document.getElementById(inputId);
+        zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = '#1677ff'; });
+        zone.addEventListener('dragleave', () => zone.style.borderColor = '#3b455c');
+        zone.addEventListener('drop', e => {
+            e.preventDefault();
+            zone.style.borderColor = '#3b455c';
+            handleFile(e.dataTransfer.files[0], zone, callback);
+        });
+        input.addEventListener('change', e => handleFile(e.target.files[0], zone, callback));
+    }
+
+    function handleFile(file, zone, callback) {
+        if (!file || file.size > 5 * 1024 * 1024) { alert('文件不能超过5MB'); return; }
+        zone.innerText = file.name;
         const reader = new FileReader();
-        reader.onload = function(event) {
-            const img = new Image();
-            img.onload = function() { callback(img); };
-            img.src = event.target.result;
-        };
+        reader.onload = e => { const img = new Image(); img.onload = () => callback(img); img.src = e.target.result; };
         reader.readAsDataURL(file);
     }
 
-    function clearFile(id) {
-        document.getElementById(id).value = "";
-        if (id === 'qrInput') qrImage = null;
-        if (id === 'avatarInput') avatarImage = null;
+    function clearFile(type) {
+        document.getElementById(type + 'Input').value = "";
+        document.getElementById(type + 'Zone').innerText = "点击或拖拽到这里";
+        if (type === 'qr') qrImage = null; else avatarImage = null;
         render();
     }
 
     function render() {
-        const size = parseInt(outputSizeCtrl.value);
-        canvas.width = size;
-        canvas.height = size * 1.5;
+        const baseW = 1200; const baseH = 1800;
+        canvas.width = baseW; canvas.height = baseH;
 
-        // 1. 支付宝蓝底
-        ctx.fillStyle = "#1677ff"; 
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // 1. 背景颜色选择适配
+        ctx.fillStyle = ctrl.bgColor.value;
+        ctx.fillRect(0, 0, baseW, baseH);
 
-        // 2. 顶部白色区域
+        // 2. 顶栏白边
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, baseW, 80);
+
+        // 3. 顶部文字
         ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, canvas.width, size * 0.25);
+        ctx.font = "bold 64px system-ui, sans-serif";
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText("推荐使用支付宝", baseW / 2, 320);
 
-        // 3. 推荐文字
-        ctx.fillStyle = "#ffffff";
-        ctx.font = `bold ${size * 0.06}px sans-serif`;
-        ctx.textAlign = "center";
-        ctx.fillText("推荐使用支付宝", canvas.width / 2, size * 0.45);
-
-        // 4. 二维码白框容器
-        const qrBoxSize = size * 0.65;
-        const qrBoxX = (canvas.width - qrBoxSize) / 2;
-        const qrBoxY = size * 0.55;
+        // 4. 白底容器 (应用圆角和二维码主色)
+        const boxW = 860; const boxH = 880;
+        const boxX = (baseW - boxW) / 2; const boxY = 460;
         
-        ctx.fillStyle = qrColorCtrl.value;
-        const radius = parseInt(borderRadiusCtrl.value) * (size / 800);
+        ctx.fillStyle = ctrl.qrColor.value; // 使用用户选定的二维码主色填充白盒背景
         ctx.beginPath();
-        ctx.roundRect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, radius);
+        ctx.roundRect(boxX, boxY, boxW, boxH, parseInt(ctrl.borderRadius.value));
         ctx.fill();
 
-        // 5. 渲染收款二维码
+        // 5. 二维码绘制 (加边框宽度适配)
         if (qrImage) {
-            const bWidth = parseInt(borderWidthCtrl.value) * (size / 800);
-            ctx.drawImage(qrImage, qrBoxX + bWidth, qrBoxY + bWidth, qrBoxSize - bWidth*2, qrBoxSize - bWidth*2);
-        } else {
-            ctx.fillStyle = "#e5e5e5";
-            ctx.fillRect(qrBoxX + 20, qrBoxY + 20, qrBoxSize - 40, qrBoxSize - 40);
-            ctx.fillStyle = "#999999";
-            ctx.font = `${size * 0.03}px sans-serif`;
-            ctx.fillText("拖拽或点击上传收款码", canvas.width / 2, qrBoxY + qrBoxSize / 2);
+            const bW = parseInt(ctrl.borderWidth.value);
+            ctx.drawImage(qrImage, boxX + bW, boxY + bW, boxW - (bW*2), boxH - (bW*2));
         }
 
-        // 6. 渲染中心自定义头像
+        // 6. 头像带位置和尺寸微调
         if (avatarImage) {
-            const avaSize = parseInt(avatarSizeCtrl.value) * (size / 800);
-            const avaX = (canvas.width - avaSize) / 2;
-            const avaY = qrBoxY + (qrBoxSize - avaSize) / 2;
+            const size = parseInt(ctrl.avatarSizeCtrl?.value || ctrl.avatarSize.value);
+            const yOffset = parseInt(ctrl.avatarYOffset.value);
+            const avaX = baseW / 2;
+            const avaY = (boxY + boxH / 2) + yOffset;
 
-            ctx.fillStyle = "#ffffff";
-            ctx.beginPath();
-            ctx.roundRect(avaX - 6, avaY - 6, avaSize + 12, avaSize + 12, 12);
-            ctx.fill();
-
-            ctx.save();
-            ctx.beginPath();
-            ctx.roundRect(avaX, avaY, avaSize, avaSize, 10);
-            ctx.clip();
-            ctx.drawImage(avatarImage, avaX, avaY, avaSize, avaSize);
-            ctx.restore();
+            ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(avaX, avaY, (size / 2) + 10, 0, Math.PI * 2); ctx.fill();
+            ctx.save(); ctx.beginPath(); ctx.arc(avaX, avaY, size / 2, 0, Math.PI * 2); ctx.clip();
+            ctx.drawImage(avatarImage, avaX - size/2, avaY - size/2, size, size); ctx.restore();
         }
 
-        // 7. 完美渲染底部标题文字
-        ctx.fillStyle = "#ffffff";
-        ctx.font = `bold ${size * 0.045}px sans-serif`;
-        ctx.fillText("支付得蚂蚁森林能量", canvas.width / 2, canvas.height - (size * 0.15));
+        // 7. 金额标注显示分支
+        if (ctrl.amountToggle.checked) {
+            ctx.fillStyle = "#ff4d4f";
+            ctx.font = "bold 72px sans-serif";
+            ctx.fillText(`${ctrl.currency.value} ${ctrl.amountVal.value}`, baseW / 2, baseH - 400);
+        }
 
-        // 8. 四个角的绿色能量浮动气泡
-        drawEnergyBubble(qrBoxX, qrBoxY, size * 0.04);
-        drawEnergyBubble(qrBoxX + qrBoxSize, qrBoxY + size*0.1, size * 0.05);
-        drawEnergyBubble(qrBoxX + qrBoxSize, qrBoxY + qrBoxSize - size*0.05, size * 0.045);
+        // 底字与能量球
+        ctx.fillStyle = "#ffffff"; ctx.font = "bold 52px sans-serif";
+        ctx.fillText("支付得蚂蚁森林能量", baseW / 2, baseH - 240);
+        drawBubble(boxX + 20, boxY - 10, 65, "能量");
+        drawBubble(boxX + boxW - 10, boxY + 120, 75, "能量");
     }
 
-    function downloadImage(format) {
-        const ext = format === 'jpeg' ? 'jpg' : 'png';
-        const link = document.createElement('a');
-        link.download = `HD_Energy_Code_${Date.now()}.${ext}`;
-        link.href = canvas.toDataURL(`image/${format}`);
-        link.click();
-    }
-
-    function drawEnergyBubble(x, y, r) {
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fillStyle = "#72d53f";
-        ctx.fill();
-        ctx.fillStyle = "#ffffff";
-        ctx.font = `${r * 0.6}px sans-serif`;
-        ctx.fillText("能量", x, y + r*0.2);
+    function drawBubble(x, y, r, text) {
+        ctx.save();
+        let g = ctx.createRadialGradient(x-r*0.3, y-r*0.3, r*0.1, x, y, r);
+        g.addColorStop(0, '#a3e76d'); g.addColorStop(1, '#52b324');
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill(); ctx.restore();
+        ctx.fillStyle = "#ffffff"; ctx.font = `bold ${r * 0.5}px sans-serif`; ctx.fillText(text, x, y);
     }
 
     render();
+
+    function downloadImage() {
+        const outSize = parseInt(ctrl.outputSize.value);
+        // 创建影子Canvas按输出尺寸精准转换
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = outSize; tempCanvas.height = outSize * 1.5;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+
+        const link = document.createElement('a');
+        link.download = `HD科技_能量码_${outSize}px.png`;
+        link.href = tempCanvas.toDataURL('image/png');
+        link.click();
+    }
 </script>
 </body>
 </html>
