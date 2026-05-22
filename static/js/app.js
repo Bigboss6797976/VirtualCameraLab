@@ -1,5 +1,7 @@
 // ==================== 全局状态 ====================
 let currentMethod = 'alipay';
+let uploadedImageData = null;
+let scannedContent = '';
 let currentQRData = null;
 
 const METHOD_CONFIG = {
@@ -8,7 +10,7 @@ const METHOD_CONFIG = {
     usdt_trc20: { name: 'USDT-TRC20', color: '#26A17B', icon: 'TR', class: 'usdt-trc' },
     usdt_erc20: { name: 'USDT-ERC20', color: '#3C3C3D', icon: 'ER', class: 'usdt-erc' },
     union: { name: '云闪付', color: '#C41E3A', icon: '云', class: 'union' },
-    custom: { name: '收款码', color: '#f59e0b', icon: '付', class: '' }
+    custom: { name: '收款码', color: '#f59e0b', icon: '付', class: 'custom' }
 };
 
 // ==================== 标签页切换 ====================
@@ -33,23 +35,84 @@ function selectMethod(method, el) {
         union: '推荐使用云闪付',
         custom: '扫码向我付款'
     };
-    document.getElementById('qr-title').value = titles[method] || '扫码向我付款';
+
+    // 更新所有标题输入框
+    document.getElementById('upload-title').value = titles[method] || '扫码向我付款';
+    document.getElementById('input-title').value = titles[method] || '扫码向我付款';
+}
+
+// ==================== 文件上传处理 ====================
+function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            // 显示预览
+            const preview = document.getElementById('upload-preview');
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+            document.getElementById('upload-placeholder').style.display = 'none';
+            document.getElementById('upload-zone').classList.add('has-file');
+
+            // 识别二维码
+            scanQRCode(img);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+// ==================== QR码识别 ====================
+function scanQRCode(img) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // 设置画布大小
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.drawImage(img, 0, 0);
+
+    // 获取图像数据
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+    // 使用 jsQR 识别
+    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: 'attemptBoth'
+    });
+
+    const resultDiv = document.getElementById('scan-result');
+    const labelDiv = document.getElementById('scan-label');
+    const contentDiv = document.getElementById('scan-content');
+
+    if (code) {
+        scannedContent = code.data;
+        resultDiv.className = 'scan-result success';
+        labelDiv.className = 'scan-label';
+        labelDiv.textContent = '✅ 识别成功';
+        contentDiv.textContent = code.data;
+
+        // 自动填充到输入框
+        document.getElementById('upload-title').value = '识别成功，点击生成能量码';
+    } else {
+        resultDiv.className = 'scan-result error';
+        labelDiv.className = 'scan-label error';
+        labelDiv.textContent = '❌ 未能识别';
+        contentDiv.textContent = '请确保上传的是清晰的二维码图片，或手动输入收款链接';
+        scannedContent = '';
+    }
 }
 
 // ==================== 生成单码 - 完全匹配图二样式 ====================
-function generateQR() {
-    const content = document.getElementById('qr-content').value.trim();
-    const amount = document.getElementById('qr-amount').value.trim();
-    const title = document.getElementById('qr-title').value;
-    const subtitle = document.getElementById('qr-subtitle').value;
-    const showEnergy = document.getElementById('energy-toggle').checked;
-
+function generateQRCard(content, method, amount, title, subtitle, showEnergy, containerId) {
     if (!content) {
-        alert('请填写收款链接或钱包地址');
+        alert('请提供二维码内容');
         return;
     }
 
-    const config = METHOD_CONFIG[currentMethod] || METHOD_CONFIG.alipay;
+    const config = METHOD_CONFIG[method] || METHOD_CONFIG.custom;
 
     // 创建卡片HTML - 完全匹配图二样式
     let html = `
@@ -86,7 +149,7 @@ function generateQR() {
         </div>
     `;
 
-    document.getElementById('qr-preview').innerHTML = html;
+    document.getElementById(containerId).innerHTML = html;
 
     // 生成QR码
     setTimeout(() => {
@@ -102,20 +165,59 @@ function generateQR() {
         });
 
         // 显示下载按钮
-        document.getElementById('download-btn').style.display = 'flex';
+        const downloadBtn = containerId === 'upload-preview-area' ? 'upload-download-btn' : 'input-download-btn';
+        document.getElementById(downloadBtn).style.display = 'flex';
 
-        // 保存当前数据用于下载
-        currentQRData = { content, amount, title, subtitle, showEnergy, method: currentMethod };
+        currentQRData = { content, amount, title, subtitle, showEnergy, method };
     }, 100);
 }
 
+// ==================== 上传模式生成 ====================
+function generateFromUpload() {
+    const content = scannedContent || document.getElementById('scan-content').textContent;
+    const amount = document.getElementById('upload-amount').value.trim();
+    const title = document.getElementById('upload-title').value;
+    const subtitle = document.getElementById('upload-subtitle').value;
+    const showEnergy = document.getElementById('upload-energy').checked;
+
+    if (!content || content === '未能识别二维码内容') {
+        alert('请先上传二维码图片或手动输入内容');
+        return;
+    }
+
+    generateQRCard(content, currentMethod, amount, title, subtitle, showEnergy, 'upload-preview-area');
+}
+
+// ==================== 输入模式生成 ====================
+function generateFromInput() {
+    const content = document.getElementById('input-content').value.trim();
+    const amount = document.getElementById('input-amount').value.trim();
+    const title = document.getElementById('input-title').value;
+    const subtitle = document.getElementById('input-subtitle').value;
+    const showEnergy = document.getElementById('input-energy').checked;
+
+    if (!content) {
+        alert('请填写收款链接或钱包地址');
+        return;
+    }
+
+    generateQRCard(content, currentMethod, amount, title, subtitle, showEnergy, 'input-preview-area');
+}
+
 // ==================== 下载功能 ====================
-function downloadQR() {
+function downloadUploadQR() {
+    downloadQR('upload-preview-area', 'upload');
+}
+
+function downloadInputQR() {
+    downloadQR('input-preview-area', 'input');
+}
+
+function downloadQR(containerId, prefix) {
     const card = document.getElementById('generated-card');
     if (!card) return;
 
     // 使用 html2canvas 或 canvas 导出
-    // 这里使用简单的 canvas 绘制
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const w = 400, h = 600;
@@ -248,21 +350,25 @@ function generateMulti() {
     valid.forEach(([method, content]) => {
         const config = METHOD_CONFIG[method] || METHOD_CONFIG.custom;
         const div = document.createElement('div');
-        div.className = 'multi-item';
+        div.className = 'input-section';
+        div.style.marginBottom = '16px';
         div.innerHTML = `
-            <h4 style="color:${config.color}">${config.name}</h4>
-            <div id="qr-${method}"></div>
-            <button onclick="downloadSingle('${method}')" class="btn btn-success" style="width:100%;margin-top:8px">
-                ⬇️ 下载
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+                <div style="width:32px;height:32px;border-radius:8px;background:${config.color};display:flex;align-items:center;justify-content:center;color:white;font-weight:700">${config.icon}</div>
+                <span style="font-weight:700;color:${config.color}">${config.name}</span>
+            </div>
+            <div id="multi-qr-${method}"></div>
+            <button onclick="downloadMultiSingle('${method}')" class="btn btn-success" style="width:100%;margin-top:10px">
+                ⬇️ 下载 ${config.name} 能量码
             </button>
         `;
         container.appendChild(div);
 
         setTimeout(() => {
-            new QRCode(document.getElementById('qr-' + method), {
+            new QRCode(document.getElementById('multi-qr-' + method), {
                 text: content,
-                width: 150,
-                height: 150,
+                width: 200,
+                height: 200,
                 colorDark: '#000000',
                 colorLight: '#ffffff',
                 correctLevel: QRCode.CorrectLevel.H
@@ -274,7 +380,7 @@ function generateMulti() {
 }
 
 function downloadMulti() {
-    document.querySelectorAll('.multi-item img').forEach((img, idx) => {
+    document.querySelectorAll('[id^="multi-qr-"] img').forEach((img, idx) => {
         setTimeout(() => {
             const link = document.createElement('a');
             link.download = `聚合码_${idx}_${Date.now()}.png`;
@@ -284,8 +390,8 @@ function downloadMulti() {
     });
 }
 
-function downloadSingle(method) {
-    const img = document.querySelector(`#qr-${method} img`);
+function downloadMultiSingle(method) {
+    const img = document.querySelector(`#multi-qr-${method} img`);
     if (img) {
         const link = document.createElement('a');
         link.download = `能量码_${method}_${Date.now()}.png`;
@@ -294,67 +400,30 @@ function downloadSingle(method) {
     }
 }
 
-// ==================== 批量生成 ====================
-function generateBatch() {
-    const data = document.getElementById('batch-data').value.trim();
-    const method = document.getElementById('batch-method').value;
+// ==================== 拖拽上传 ====================
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadZone = document.getElementById('upload-zone');
 
-    if (!data) {
-        alert('请填写收款链接或地址');
-        return;
-    }
-
-    const container = document.getElementById('batch-grid');
-    container.innerHTML = '';
-    document.getElementById('batch-result').style.display = 'block';
-
-    const colors = [
-        { name: '蓝色', color: '#1677ff' },
-        { name: '绿色', color: '#07c160' },
-        { name: '紫色', color: '#7c3aed' },
-        { name: '红色', color: '#C41E3A' },
-        { name: '金色', color: '#f59e0b' },
-        { name: '暗黑', color: '#3C3C3D' }
-    ];
-
-    colors.forEach(c => {
-        const div = document.createElement('div');
-        div.className = 'multi-item';
-        div.innerHTML = `
-            <h4 style="color:${c.color}">${c.name}风格</h4>
-            <div id="batch-qr-${c.name}"></div>
-            <button onclick="downloadBatchSingle('${c.name}')" class="btn btn-success" style="width:100%;margin-top:8px">
-                ⬇️ 下载
-            </button>
-        `;
-        container.appendChild(div);
-
-        setTimeout(() => {
-            new QRCode(document.getElementById('batch-qr-' + c.name), {
-                text: data,
-                width: 150,
-                height: 150,
-                colorDark: c.color,
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.H
-            });
-        }, 100);
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
     });
-}
 
-function downloadBatchSingle(name) {
-    const img = document.querySelector(`#batch-qr-${name} img`);
-    if (img) {
-        const link = document.createElement('a');
-        link.download = `能量码_${name}_${Date.now()}.png`;
-        link.href = img.src;
-        link.click();
-    }
-}
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('dragover');
+    });
 
-// ==================== 初始化 ====================
-document.getElementById('qr-content').addEventListener('input', function() {
-    if (this.value.trim()) {
-        generateQR();
-    }
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            const input = document.getElementById('file-input');
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            input.files = dt.files;
+            handleFileUpload({ target: input });
+        }
+    });
 });
