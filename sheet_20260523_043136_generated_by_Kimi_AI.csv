@@ -1,0 +1,5 @@
+文件,说明,下载,
+deploy.py,Termux 一键部署脚本 (推荐),[下载](sandbox:///mnt/agents/output/deploy.py),
+payment-code-beautifier/,完整前端项目,[index.html](sandbox:///mnt/agents/output/payment-code-beautifier/index.html) / [style.css](sandbox:///mnt/agents/output/payment-code-beautifier/css/style.css) / [app.js](sandbox:///mnt/agents/output/payment-code-beautifier/js/app.js),
+payment-code-beautifier-py/,Python Flask 版,[app.py](sandbox:///mnt/agents/output/payment-code-beautifier-py/app.py) / [requirements.txt](sandbox:///mnt/agents/output/payment-code-beautifier-py/requirements.txt),
+github_push.sh,GitHub 推送命令,[下载](sandbox:///mnt/agents/output/github_push.sh),
