@@ -1,6 +1,6 @@
 import jsQR from 'jsqr';
 import QRCode from 'qrcode';
-import type { Platform, PlatformConfig, DecodedQR, QRConfig, GeneratedCode } from '../types';
+import type { Platform, PlatformConfig, DecodedQR, QRConfig } from '../types';
 import { PLATFORMS } from '../types';
 
 // 检测平台类型
@@ -16,7 +16,7 @@ export function getPlatformConfig(platform: Platform): PlatformConfig {
   return PLATFORMS.find(p => p.id === platform) || PLATFORMS[0];
 }
 
-// jsQR 解码 - 从图片提取支付链接
+// jsQR 解码
 export async function decodeQRFromImage(file: File): Promise<DecodedQR | null> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -63,11 +63,9 @@ export async function decodeQRFromImage(file: File): Promise<DecodedQR | null> {
   });
 }
 
-// 构建支付URL（带金额和备注）
+// 构建支付URL
 export function buildPayUrl(baseUrl: string, amount?: string, remark?: string): string {
   let url = baseUrl;
-
-  // 支付宝
   if (url.includes('alipay')) {
     if (amount) {
       url = url.replace(/&?amount=[^&]*/g, '');
@@ -78,21 +76,10 @@ export function buildPayUrl(baseUrl: string, amount?: string, remark?: string): 
       url += (url.includes('?') ? '&' : '?') + `remark=${encodeURIComponent(remark)}`;
     }
   }
-  // 微信
-  else if (url.includes('wxp://')) {
-    // 微信URL格式处理
-    if (amount || remark) {
-      const params = new URLSearchParams();
-      if (amount) params.append('amount', amount);
-      if (remark) params.append('remark', encodeURIComponent(remark));
-      url = url.split('?')[0] + '?' + params.toString();
-    }
-  }
-
   return url;
 }
 
-// 用 qrcode.js 重新生成干净二维码
+// 重新生成干净二维码
 export async function regenerateQR(url: string, options?: QRCode.QRCodeToDataURLOptions): Promise<string> {
   return QRCode.toDataURL(url, {
     width: 400,
@@ -106,7 +93,7 @@ export async function regenerateQR(url: string, options?: QRCode.QRCodeToDataURL
   });
 }
 
-// 渲染官方克隆模板到 Canvas
+// ==================== 官方克隆模板 - 精确匹配截图 ====================
 export async function renderOfficialTemplate(
   qrDataUrl: string,
   config: QRConfig,
@@ -116,90 +103,108 @@ export async function renderOfficialTemplate(
   if (!ctx) throw new Error('Canvas context not available');
 
   const platform = getPlatformConfig(config.platform);
-  const width = 375;
-  const height = 600;
 
-  // 高清渲染
-  const scale = 3;
+  // 画布尺寸 - 采用标准手机屏幕比例 9:16
+  const width = 375;
+  const height = 667;
+  const scale = 3; // 高清渲染
+
   canvas.width = width * scale;
   canvas.height = height * scale;
   canvas.style.width = width + 'px';
   canvas.style.height = height + 'px';
   ctx.scale(scale, scale);
 
-  // 1. 背景渐变
-  const gradient = ctx.createLinearGradient(0, 0, 0, height);
+  // ===== 1. 背景渐变 =====
+  const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
   if (config.platform === 'alipay') {
-    gradient.addColorStop(0, '#1677ff');
-    gradient.addColorStop(1, '#0056d6');
+    bgGradient.addColorStop(0, '#1a8cff');
+    bgGradient.addColorStop(0.3, '#1677ff');
+    bgGradient.addColorStop(1, '#1677ff');
   } else if (config.platform === 'wechat') {
-    gradient.addColorStop(0, '#07c160');
-    gradient.addColorStop(1, '#06ad56');
+    bgGradient.addColorStop(0, '#07c160');
+    bgGradient.addColorStop(1, '#06ad56');
   } else {
-    gradient.addColorStop(0, '#e60012');
-    gradient.addColorStop(1, '#c4000f');
+    bgGradient.addColorStop(0, '#e60012');
+    bgGradient.addColorStop(1, '#c4000f');
   }
-  ctx.fillStyle = gradient;
+  ctx.fillStyle = bgGradient;
   ctx.fillRect(0, 0, width, height);
 
-  // 2. 顶部白色区域
+  // ===== 2. 顶部白色区域 =====
+  const headerHeight = 60;
   ctx.fillStyle = '#ffffff';
-  ctx.beginPath();
-  ctx.roundRect(0, 0, width, 80, [0, 0, 0, 0]);
-  ctx.fill();
+  ctx.fillRect(0, 0, width, headerHeight);
 
-  // 3. "支" 图标
-  const iconX = 20;
-  const iconY = 20;
-  ctx.fillStyle = platform.color;
-  ctx.beginPath();
-  ctx.roundRect(iconX, iconY, 36, 36, 8);
-  ctx.fill();
-
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 20px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(platform.icon, iconX + 18, iconY + 18);
-
-  // 4. 平台名称
-  ctx.fillStyle = '#333333';
-  ctx.font = 'bold 18px sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText(platform.name, iconX + 46, iconY + 20);
-
-  // 5. 标题
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 32px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('推荐使用' + platform.name, width / 2, 140);
-
-  // 6. 副标题
-  ctx.fillStyle = 'rgba(255,255,255,0.8)';
-  ctx.font = '16px sans-serif';
-  ctx.fillText('打开' + platform.name + '[扫一扫]', width / 2, 170);
-
-  // 7. 二维码卡片
-  const cardWidth = 280;
-  const cardHeight = 320;
-  const cardX = (width - cardWidth) / 2;
-  const cardY = 200;
-
-  ctx.fillStyle = '#ffffff';
-  ctx.beginPath();
-  ctx.roundRect(cardX, cardY, cardWidth, cardHeight, 16);
-  ctx.fill();
-
-  // 卡片阴影
-  ctx.shadowColor = 'rgba(0,0,0,0.1)';
-  ctx.shadowBlur = 20;
-  ctx.shadowOffsetY = 10;
-  ctx.fill();
+  // 顶部阴影
+  ctx.shadowColor = 'rgba(0,0,0,0.05)';
+  ctx.shadowBlur = 4;
+  ctx.shadowOffsetY = 2;
+  ctx.fillRect(0, headerHeight - 2, width, 2);
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
   ctx.shadowOffsetY = 0;
 
-  // 8. 加载并绘制二维码
+  // ===== 3. 支付宝 Logo =====
+  const logoX = 15;
+  const logoY = 12;
+  const logoSize = 36;
+
+  // 蓝色圆角方块背景
+  ctx.fillStyle = '#1677ff';
+  ctx.beginPath();
+  ctx.roundRect(logoX, logoY, logoSize, logoSize, 8);
+  ctx.fill();
+
+  // "支" 字
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 22px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('支', logoX + logoSize/2, logoY + logoSize/2 + 1);
+
+  // ===== 4. "支付宝" 文字 =====
+  ctx.fillStyle = '#333333';
+  ctx.font = 'bold 18px -apple-system, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('支付宝', logoX + logoSize + 10, logoY + logoSize/2);
+
+  // ===== 5. 标题 "推荐使用支付宝" =====
+  const titleY = 140;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 32px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('推荐使用支付宝', width / 2, titleY);
+
+  // ===== 6. 副标题 =====
+  const subTitleY = 185;
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.font = '16px -apple-system, sans-serif';
+  ctx.fillText('打开支付宝[扫一扫]', width / 2, subTitleY);
+
+  // ===== 7. 二维码白色卡片 =====
+  const cardWidth = 280;
+  const cardHeight = 310;
+  const cardX = (width - cardWidth) / 2;
+  const cardY = 220;
+
+  // 卡片阴影
+  ctx.shadowColor = 'rgba(0,0,0,0.15)';
+  ctx.shadowBlur = 20;
+  ctx.shadowOffsetY = 8;
+
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.roundRect(cardX, cardY, cardWidth, cardHeight, 12);
+  ctx.fill();
+
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+
+  // ===== 8. 加载并绘制二维码 =====
   const qrImg = new Image();
   await new Promise<void>((resolve, reject) => {
     qrImg.onload = () => resolve();
@@ -209,90 +214,126 @@ export async function renderOfficialTemplate(
 
   const qrSize = 220;
   const qrX = cardX + (cardWidth - qrSize) / 2;
-  const qrY = cardY + 20;
+  const qrY = cardY + 25;
 
-  // 二维码白色背景
+  // 二维码白色背景边
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(qrX - 4, qrY - 4, qrSize + 8, qrSize + 8);
+  ctx.fillRect(qrX - 6, qrY - 6, qrSize + 12, qrSize + 12);
 
   ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
 
-  // 9. 中心头像/图标
-  const centerSize = 50;
-  const centerX = qrX + (qrSize - centerSize) / 2;
-  const centerY = qrY + (qrSize - centerSize) / 2;
+  // ===== 9. 中心头像 =====
+  const avatarSize = 56;
+  const avatarX = qrX + (qrSize - avatarSize) / 2;
+  const avatarY = qrY + (qrSize - avatarSize) / 2;
 
+  // 白色圆形边框
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
-  ctx.arc(centerX + centerSize/2, centerY + centerSize/2, centerSize/2 + 3, 0, Math.PI * 2);
+  ctx.arc(avatarX + avatarSize/2, avatarY + avatarSize/2, avatarSize/2 + 3, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.strokeStyle = '#f0f0f0';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  ctx.fillStyle = platform.color;
+  // 头像背景
+  ctx.fillStyle = '#f5f5f5';
   ctx.beginPath();
-  ctx.arc(centerX + centerSize/2, centerY + centerSize/2, centerSize/2 - 2, 0, Math.PI * 2);
+  ctx.arc(avatarX + avatarSize/2, avatarY + avatarSize/2, avatarSize/2, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 18px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(platform.icon, centerX + centerSize/2, centerY + centerSize/2);
-
-  // 10. 四角能量标签
-  const tagSize = 40;
-  const positions = [
-    { x: cardX + 10, y: cardY + 10 },
-    { x: cardX + cardWidth - tagSize - 10, y: cardY + 10 },
-    { x: cardX + 10, y: cardY + cardHeight - tagSize - 50 },
-    { x: cardX + cardWidth - tagSize - 10, y: cardY + cardHeight - tagSize - 50 },
-  ];
-
-  positions.forEach(pos => {
-    ctx.fillStyle = '#52c41a';
+  // 如果有头像URL，绘制头像
+  if (config.avatar) {
+    const avatarImg = new Image();
+    await new Promise<void>((resolve) => {
+      avatarImg.onload = () => resolve();
+      avatarImg.onerror = () => resolve();
+      avatarImg.src = config.avatar!;
+    });
+    ctx.save();
     ctx.beginPath();
-    ctx.roundRect(pos.x, pos.y, tagSize, 20, 4);
+    ctx.arc(avatarX + avatarSize/2, avatarY + avatarSize/2, avatarSize/2 - 1, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.drawImage(avatarImg, avatarX + 1, avatarY + 1, avatarSize - 2, avatarSize - 2);
+    ctx.restore();
+  } else {
+    // 默认头像图标
+    ctx.fillStyle = '#1677ff';
+    ctx.beginPath();
+    ctx.arc(avatarX + avatarSize/2, avatarY + avatarSize/2, avatarSize/2 - 2, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = '10px sans-serif';
+    ctx.font = 'bold 20px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('绿色能量', pos.x + tagSize/2, pos.y + 10);
+    ctx.fillText('支', avatarX + avatarSize/2, avatarY + avatarSize/2);
+  }
+
+  // ===== 10. 绿色能量标签（四角） =====
+  const tagWidth = 50;
+  const tagHeight = 22;
+  const tagRadius = 11;
+  const tagOffset = 8;
+
+  const tagPositions = [
+    { x: cardX + tagOffset, y: cardY + tagOffset }, // 左上
+    { x: cardX + cardWidth - tagWidth - tagOffset, y: cardY + tagOffset }, // 右上
+    { x: cardX + tagOffset, y: cardY + cardHeight - tagHeight - 45 }, // 左下
+    { x: cardX + cardWidth - tagWidth - tagOffset, y: cardY + cardHeight - tagHeight - 45 }, // 右下
+  ];
+
+  tagPositions.forEach(pos => {
+    // 绿色渐变背景
+    const tagGrad = ctx.createLinearGradient(pos.x, pos.y, pos.x + tagWidth, pos.y + tagHeight);
+    tagGrad.addColorStop(0, '#7ed321');
+    tagGrad.addColorStop(1, '#52c41a');
+    ctx.fillStyle = tagGrad;
+    ctx.beginPath();
+    ctx.roundRect(pos.x, pos.y, tagWidth, tagHeight, tagRadius);
+    ctx.fill();
+
+    // 文字
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 11px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('绿色', pos.x + tagWidth/2, pos.y + tagHeight/2 - 1);
+    ctx.fillText('能量', pos.x + tagWidth/2, pos.y + tagHeight/2 + 9);
   });
 
-  // 11. 金额显示
+  // ===== 11. 金额显示 =====
   if (config.amount) {
+    const amountY = cardY + cardHeight - 55;
     ctx.fillStyle = '#333333';
-    ctx.font = 'bold 24px sans-serif';
+    ctx.font = 'bold 26px -apple-system, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('¥' + config.amount, width / 2, cardY + cardHeight - 55);
+    ctx.textBaseline = 'middle';
+    ctx.fillText('¥' + config.amount, width / 2, amountY);
   }
 
-  // 12. 备注
+  // ===== 12. 备注 =====
   if (config.remark) {
+    const remarkY = cardY + cardHeight - 28;
     ctx.fillStyle = '#999999';
-    ctx.font = '14px sans-serif';
+    ctx.font = '14px -apple-system, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(config.remark, width / 2, cardY + cardHeight - 30);
+    ctx.textBaseline = 'middle';
+    ctx.fillText(config.remark, width / 2, remarkY);
   }
 
-  // 13. 底部文字
+  // ===== 13. 底部文字 "支付得蚂蚁森林能量" =====
+  const footerY = height - 50;
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 16px sans-serif';
+  ctx.font = 'bold 18px -apple-system, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('支付得蚂蚁森林能量', width / 2, height - 40);
+  ctx.textBaseline = 'middle';
+  ctx.fillText('支付得蚂蚁森林能量', width / 2, footerY);
 
-  // 14. 底部小字
-  ctx.fillStyle = 'rgba(255,255,255,0.6)';
-  ctx.font = '12px sans-serif';
-  ctx.fillText('扫码直接支付，无需输入金额', width / 2, height - 20);
+  // ===== 14. 底部小字 =====
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.font = '12px -apple-system, sans-serif';
+  ctx.fillText('扫码直接支付，无需输入金额', width / 2, footerY + 22);
 }
 
-// 渲染聚合能量码
+// ==================== 聚合能量码 ====================
 export async function renderAggregateCode(
   codes: { platform: Platform; qrDataUrl: string; amount?: string }[],
   canvas: HTMLCanvasElement
@@ -320,12 +361,13 @@ export async function renderAggregateCode(
 
   // 标题
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 28px sans-serif';
+  ctx.font = 'bold 28px -apple-system, sans-serif';
   ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
   ctx.fillText('聚合能量码', width / 2, 50);
 
   ctx.fillStyle = 'rgba(255,255,255,0.7)';
-  ctx.font = '14px sans-serif';
+  ctx.font = '14px -apple-system, sans-serif';
   ctx.fillText('一码多付 · 扫码任选', width / 2, 75);
 
   const cardWidth = 320;
@@ -360,14 +402,15 @@ export async function renderAggregateCode(
     ctx.fillStyle = '#333333';
     ctx.font = 'bold 18px sans-serif';
     ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillText(platform.name, (width - cardWidth) / 2 + 75, y + 40);
+    ctx.textBaseline = 'middle';
+    ctx.fillText(platform.name, (width - cardWidth) / 2 + 75, y + 35);
 
     // 金额
     if (code.amount) {
       ctx.fillStyle = platform.color;
       ctx.font = 'bold 22px sans-serif';
-      ctx.fillText('¥' + code.amount, (width - cardWidth) / 2 + 75, y + 70);
+      ctx.textBaseline = 'middle';
+      ctx.fillText('¥' + code.amount, (width - cardWidth) / 2 + 75, y + 65);
     }
 
     // 二维码
@@ -398,7 +441,7 @@ export async function renderAggregateCode(
   ctx.fillStyle = 'rgba(255,255,255,0.8)';
   ctx.font = '14px sans-serif';
   ctx.textAlign = 'center';
-  ctx.textBaseline = 'alphabetic';
+  ctx.textBaseline = 'middle';
   ctx.fillText('支付得蚂蚁森林能量 · 环保又便捷', width / 2, height - 30);
 }
 
