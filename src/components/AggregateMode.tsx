@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { Layers, Plus, Trash2, Download, ArrowRight, QrCode } from 'lucide-react';
+import { Layers, Plus, Trash2, Download, Users, ImagePlus, QrCode } from 'lucide-react';
 import QRCode from 'qrcode';
 import { renderAggregateCode, downloadCanvas, getPlatformConfig } from '../utils/qrEngine';
 import type { Platform } from '../types';
@@ -10,11 +10,12 @@ interface AggregateItem {
   url: string;
   amount: string;
   remark: string;
+  avatarUrl: string;
 }
 
 export default function AggregateMode() {
   const [items, setItems] = useState<AggregateItem[]>([
-    { id: '1', platform: 'alipay', url: '', amount: '', remark: '' },
+    { id: '1', platform: 'alipay', url: '', amount: '', remark: '', avatarUrl: '' },
   ]);
   const [isGenerating, setIsGenerating] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -29,6 +30,7 @@ export default function AggregateMode() {
       url: '',
       amount: '',
       remark: '',
+      avatarUrl: '',
     }]);
   }, [items.length]);
 
@@ -41,6 +43,14 @@ export default function AggregateMode() {
       item.id === id ? { ...item, [field]: value } : item
     ));
   }, []);
+
+  const handleAvatarUpload = useCallback((id: string, file: File) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      updateItem(id, 'avatarUrl', event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  }, [updateItem]);
 
   const handleGenerate = useCallback(async () => {
     const validItems = items.filter(item => item.url.trim());
@@ -84,6 +94,21 @@ export default function AggregateMode() {
 
   return (
     <div className="space-y-6">
+      {/* 多人付款说明 */}
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+            <Users className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <p className="font-bold text-green-800">多人同时扫码付款</p>
+            <p className="text-sm text-green-700 mt-1">
+              聚合能量码支持多人同时扫描不同支付方式，各自独立支付。每个人选择自己方便的支付方式，输入密码即可完成付款。适合群收款、活动报名、多人拼单等场景。
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-gradient-to-r from-alipay-blue to-alipay-dark rounded-xl p-4 text-white">
         <div className="flex items-center gap-3">
           <Layers className="w-6 h-6" />
@@ -147,6 +172,32 @@ export default function AggregateMode() {
                   placeholder="备注"
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-alipay-blue focus:ring-2 focus:ring-alipay-light outline-none transition-all text-sm"
                 />
+              </div>
+
+              {/* 头像上传 */}
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleAvatarUpload(item.id, file);
+                    }}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <div className={`
+                    w-12 h-12 rounded-full border-2 border-dashed flex items-center justify-center transition-all
+                    ${item.avatarUrl ? 'border-green-500' : 'border-gray-300 hover:border-alipay-blue'}
+                  `}>
+                    {item.avatarUrl ? (
+                      <img src={item.avatarUrl} alt="avatar" className="w-full h-full rounded-full object-cover" />
+                    ) : (
+                      <ImagePlus className="w-5 h-5 text-gray-400" />
+                    )}
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500">点击上传头像照片</p>
               </div>
             </div>
           );

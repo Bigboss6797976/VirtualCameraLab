@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { Link2, QrCode, Download, ArrowRight, Type, Hash } from 'lucide-react';
+import { Link2, QrCode, Download, ArrowRight, Type, Hash, ImagePlus, Users, Camera } from 'lucide-react';
 import QRCode from 'qrcode';
 import { renderOfficialTemplate, downloadCanvas, getPlatformConfig } from '../utils/qrEngine';
 import type { Platform } from '../types';
@@ -10,18 +10,30 @@ export default function GenerateMode() {
   const [amount, setAmount] = useState('');
   const [remark, setRemark] = useState('');
   const [userName, setUserName] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedUrl, setGeneratedUrl] = useState('');
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const platformConfig = getPlatformConfig(platform);
+
+  const handleAvatarUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setAvatarUrl(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  }, []);
 
   const handleGenerate = useCallback(async () => {
     if (!url.trim()) return;
 
     setIsGenerating(true);
     try {
-      // 1. 重新生成干净二维码
       const cleanQr = await QRCode.toDataURL(url, {
         width: 400,
         margin: 2,
@@ -29,13 +41,13 @@ export default function GenerateMode() {
       });
       setGeneratedUrl(cleanQr);
 
-      // 2. 渲染官方模板
       if (canvasRef.current) {
         await renderOfficialTemplate(cleanQr, {
           platform,
           amount: amount || undefined,
           remark: remark || undefined,
           userName: userName || undefined,
+          avatar: avatarUrl || undefined,
         }, canvasRef.current);
       }
     } catch (err) {
@@ -43,7 +55,7 @@ export default function GenerateMode() {
     } finally {
       setIsGenerating(false);
     }
-  }, [url, platform, amount, remark, userName]);
+  }, [url, platform, amount, remark, userName, avatarUrl]);
 
   const handleDownload = useCallback(() => {
     if (!canvasRef.current) return;
@@ -55,6 +67,21 @@ export default function GenerateMode() {
 
   return (
     <div className="space-y-6">
+      {/* 多人付款说明 */}
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+            <Users className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <p className="font-bold text-green-800">多人同时扫码付款</p>
+            <p className="text-sm text-green-700 mt-1">
+              生成的能量码支持多人同时扫描，各自独立支付。每个人扫码后显示相同金额，输入密码即可完成付款。适合群收款、活动报名、多人拼单等场景。
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* 平台选择 */}
       <div className="grid grid-cols-3 gap-3">
         {platforms.map((p) => {
@@ -122,6 +149,7 @@ export default function GenerateMode() {
                 className="w-full pl-7 pr-4 py-2.5 rounded-xl border border-gray-300 focus:border-alipay-blue focus:ring-2 focus:ring-alipay-light outline-none transition-all text-sm"
               />
             </div>
+            <p className="text-xs text-gray-400 mt-1">多人扫码统一显示此金额</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
@@ -132,7 +160,7 @@ export default function GenerateMode() {
               type="text"
               value={remark}
               onChange={(e) => setRemark(e.target.value)}
-              placeholder="商品名称"
+              placeholder="商品名称/活动说明"
               className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-alipay-blue focus:ring-2 focus:ring-alipay-light outline-none transition-all text-sm"
             />
           </div>
@@ -149,6 +177,39 @@ export default function GenerateMode() {
             placeholder="显示在二维码下方"
             className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-alipay-blue focus:ring-2 focus:ring-alipay-light outline-none transition-all text-sm"
           />
+        </div>
+
+        {/* 头像上传 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+            <Camera className="w-4 h-4" />
+            中心头像（可选）
+          </label>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarUpload}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+              <div className={`
+                w-16 h-16 rounded-full border-2 border-dashed flex items-center justify-center transition-all
+                ${avatarUrl ? 'border-green-500 bg-green-50' : 'border-gray-300 hover:border-alipay-blue bg-gray-50'}
+              `}>
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="avatar" className="w-full h-full rounded-full object-cover" />
+                ) : (
+                  <ImagePlus className="w-6 h-6 text-gray-400" />
+                )}
+              </div>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-gray-600">点击上传头像照片</p>
+              <p className="text-xs text-gray-400">支持 JPG、PNG 格式，显示在二维码中心</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -184,8 +245,8 @@ export default function GenerateMode() {
           {/* 唤起支付说明 */}
           <div className="mt-4 p-3 rounded-lg bg-green-50 border border-green-200">
             <p className="text-sm text-green-800 flex items-center gap-2">
-              <ArrowRight className="w-4 h-4" />
-              扫码后直接进入{platformConfig.name}输密码页面，无需手动输入金额
+              <Users className="w-4 h-4" />
+              多人可同时扫描此码，各自独立支付，无需排队
             </p>
           </div>
         </div>

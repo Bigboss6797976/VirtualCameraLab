@@ -1,14 +1,13 @@
 import { useState, useCallback, useRef } from 'react';
-import { Upload, Scan, Copy, Check, ArrowRight, QrCode, Trash2 } from 'lucide-react';
+import { Upload, Scan, Copy, Check, ArrowRight, QrCode, Trash2, Users, ImagePlus } from 'lucide-react';
 import { useQRDecode } from '../hooks/useQRDecode';
 import { regenerateQR, renderOfficialTemplate, downloadCanvas } from '../utils/qrEngine';
 import { getPlatformConfig } from '../utils/qrEngine';
-import type { Platform } from '../types';
 
 export default function DecodeMode() {
   const { decoded, isDecoding, error, decode, clear } = useQRDecode();
-  const [previewUrl, setPreviewUrl] = useState<string>('');
-  const [regeneratedQr, setRegeneratedQr] = useState<string>('');
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [regeneratedQr, setRegeneratedQr] = useState('');
   const [amount, setAmount] = useState('');
   const [remark, setRemark] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -22,7 +21,6 @@ export default function DecodeMode() {
     const result = await decode(file);
 
     if (result) {
-      // 立即重新生成干净二维码
       const cleanQr = await regenerateQR(result.url);
       setRegeneratedQr(cleanQr);
     }
@@ -87,6 +85,21 @@ export default function DecodeMode() {
 
   return (
     <div className="space-y-6">
+      {/* 多人付款说明 */}
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+            <Users className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <p className="font-bold text-green-800">多人同时扫码付款</p>
+            <p className="text-sm text-green-700 mt-1">
+              生成的能量码支持多人同时扫描，各自独立支付。每个人扫码后显示相同金额，输入密码即可完成付款。适合群收款、活动报名、多人拼单等场景。
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* 上传区域 */}
       {!decoded && (
         <div
@@ -103,14 +116,17 @@ export default function DecodeMode() {
           />
           <div className="space-y-3">
             <div className="w-16 h-16 mx-auto bg-gradient-to-br from-alipay-blue to-alipay-dark rounded-2xl flex items-center justify-center shadow-lg shadow-alipay-blue/20">
-              <Upload className="w-8 h-8 text-white" />
+              <ImagePlus className="w-8 h-8 text-white" />
             </div>
             <div>
               <p className="text-lg font-semibold text-gray-800">
                 {isDecoding ? '正在解码...' : '点击或拖拽上传收款码截图'}
               </p>
               <p className="text-sm text-gray-500 mt-1">
-                自动提取真实支付链接，重新生成干净二维码
+                支持 JPG、PNG、GIF、WEBP 格式照片
+              </p>
+              <p className="text-xs text-alipay-blue mt-2 font-medium">
+                上传后会自动提取支付链接并生成新的蚂蚁能量付款码
               </p>
             </div>
           </div>
@@ -166,7 +182,7 @@ export default function DecodeMode() {
                 <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
                   <p className="text-sm font-medium text-gray-700">自定义收款参数</p>
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">金额（扫码直接显示）</label>
+                    <label className="block text-xs text-gray-500 mb-1">金额（多人扫码统一显示）</label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">¥</span>
                       <input
@@ -177,14 +193,15 @@ export default function DecodeMode() {
                         className="w-full pl-7 pr-4 py-2 rounded-lg border border-gray-300 focus:border-alipay-blue focus:ring-2 focus:ring-alipay-light outline-none transition-all text-sm"
                       />
                     </div>
+                    <p className="text-xs text-gray-400 mt-1">所有扫描者将看到此金额</p>
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">备注（商品名称）</label>
+                    <label className="block text-xs text-gray-500 mb-1">备注（商品名称/活动说明）</label>
                     <input
                       type="text"
                       value={remark}
                       onChange={(e) => setRemark(e.target.value)}
-                      placeholder="例如：商品A"
+                      placeholder="例如：聚餐AA / 活动报名费"
                       className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-alipay-blue focus:ring-2 focus:ring-alipay-light outline-none transition-all text-sm"
                     />
                   </div>
@@ -217,6 +234,14 @@ export default function DecodeMode() {
                     >
                       下载
                     </button>
+                  </div>
+
+                  {/* 多人付款提示 */}
+                  <div className="mt-3 p-3 rounded-lg bg-green-50 border border-green-200">
+                    <p className="text-xs text-green-800 flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5" />
+                      此码支持多人同时扫描付款，各自独立到账
+                    </p>
                   </div>
                 </div>
               </div>
