@@ -1,36 +1,73 @@
-# 能量码生成器 v2.0 ⚡
+# React + TypeScript + Vite
 
-专业的收款码克隆生成工具，支持支付宝/微信/云闪付官方样式克隆。
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## 核心功能
+Currently, two official plugins are available:
 
-- **jsQR 解码**：从截图中提取真实支付链接
-- **qrcode.js 重新生成**：生成全新干净二维码
-- **官方克隆模板**：完全匹配支付宝蓝/微信绿/云闪付红
-- **聚合能量码**：多平台合一，一码多付
-- **扫码直接支付**：唤起支付宝/微信，进入输密码页面
-- **自定义金额/备注**：扫码直接显示金额
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## 技术栈
+## React Compiler
 
-- React 18 + TypeScript + Vite
-- Tailwind CSS
-- jsQR（二维码解码）
-- qrcode.js（二维码生成）
-- HTML5 Canvas（模板渲染）
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## 安装运行
+## Expanding the ESLint configuration
 
-```bash
-npm install
-npm run dev
-npm run build
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
+
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
 
-## 部署
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-```bash
-./push.sh
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
-
-自动推送到 GitHub，Railway 自动部署。
