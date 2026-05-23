@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { decodeQRFromImage, detectPlatform } from '../utils/qrEngine';
+import { decodeQRFromImage } from '../utils/qrEngine';
 import type { DecodedQR } from '../types';
 
 export function useQRDecode() {

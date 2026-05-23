@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react';
-import type { UploadImage } from '../types';
 
 export interface UploadImage {
   id: string;
