@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer components {
+  .glass-effect {
+    @apply bg-white/90 backdrop-blur-xl border border-white/30;
+  }
+
+  .alipay-gradient {
+    background: linear-gradient(135deg, #1677ff 0%, #0056d6 100%);
+  }
+
+  .wechat-gradient {
+    background: linear-gradient(135deg, #07c160 0%, #06ad56 100%);
+  }
+
+  .union-gradient {
+    background: linear-gradient(135deg, #e60012 0%, #c4000f 100%);
+  }
+
+  .energy-pulse {
+    animation: energyPulse 2s ease-in-out infinite;
+  }
+
+  .qr-card {
+    @apply bg-white rounded-2xl shadow-card;
+    padding: 20px;
+  }
+
+  .platform-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@keyframes energyPulse {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(82, 196, 26, 0.3);
+  }
+  50% { 
+    box-shadow: 0 0 40px rgba(82, 196, 26, 0.6);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
