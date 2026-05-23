@@ -2,1308 +2,547 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>蚂蚁能量收款码生成器 Pro - 官方级美化</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>蚂蚁能量收款码生成器 Pro v5.0 魔法师版</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
-        * { font-family: 'Noto Sans SC', sans-serif; }
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .gradient-bg {
-            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-        }
-        .scan-line {
-            position: absolute;
-            width: 100%;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, #84cc16, transparent);
-            animation: scan 2.5s linear infinite;
-            top: 0;
-            z-index: 10;
-        }
-        @keyframes scan {
-            0% { top: 0; opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { top: 100%; opacity: 0; }
-        }
-        .pulse-ring {
-            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
-        }
-        @keyframes pulse-ring {
-            0% { transform: scale(0.8); opacity: 1; }
-            100% { transform: scale(1.5); opacity: 0; }
-        }
-        .upload-zone {
-            border: 2px dashed rgba(132, 204, 22, 0.4);
-            transition: all 0.3s ease;
-        }
-        .upload-zone:hover, .upload-zone.dragover {
-            border-color: #84cc16;
-            background: rgba(132, 204, 22, 0.08);
-        }
-        .energy-badge {
-            background: linear-gradient(135deg, #84cc16, #65a30d);
-            box-shadow: 0 4px 15px rgba(132, 204, 22, 0.4);
-        }
-        .template-card {
-            transition: all 0.3s ease;
-            cursor: pointer;
-            border: 2px solid transparent;
-        }
-        .template-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
-        .template-card.selected {
-            border-color: #84cc16;
-            box-shadow: 0 0 20px rgba(132, 204, 22, 0.3);
-        }
-        .qr-container {
-            position: relative;
-            display: inline-block;
-        }
-        .corner-decoration {
-            position: absolute;
-            width: 24px;
-            height: 24px;
-            border: 3px solid #84cc16;
-        }
-        .corner-tl { top: -6px; left: -6px; border-right: none; border-bottom: none; }
-        .corner-tr { top: -6px; right: -6px; border-left: none; border-bottom: none; }
-        .corner-bl { bottom: -6px; left: -6px; border-right: none; border-top: none; }
-        .corner-br { bottom: -6px; right: -6px; border-left: none; border-top: none; }
-        .payment-tag {
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 5px 18px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-            z-index: 10;
-            white-space: nowrap;
-        }
-        .tag-alipay { background: #1677ff; color: white; }
-        .tag-wechat { background: #07c160; color: white; }
-        .tag-union { background: #c41e3a; color: white; }
-        .tab-active {
-            background: rgba(132, 204, 22, 0.2);
-            color: #84cc16;
-            border: 1px solid rgba(132, 204, 22, 0.4);
-        }
-        .floating-particle {
-            position: fixed;
-            pointer-events: none;
-            opacity: 0.4;
-            animation: float-up 10s linear infinite;
-        }
-        @keyframes float-up {
-            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-            10% { opacity: 0.4; }
-            90% { opacity: 0.4; }
-            100% { transform: translateY(-100px) rotate(720deg); opacity: 0; }
-        }
-        .download-btn {
-            background: linear-gradient(135deg, #84cc16, #65a30d);
-            transition: all 0.3s ease;
-        }
-        .download-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(132, 204, 22, 0.4);
-        }
-        .detected-qr-item {
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-        .detected-qr-item:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-        }
-        .detected-qr-item.selected {
-            ring: 3px solid #84cc16;
-        }
-        .extract-btn {
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            transition: all 0.3s ease;
-        }
-        .extract-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
-        }
-        .multi-qr-card {
-            transition: all 0.3s ease;
-        }
-        .multi-qr-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
-        }
-        .avatar-upload-zone {
-            border: 2px dashed rgba(132, 204, 22, 0.3);
-            transition: all 0.3s ease;
-        }
-        .avatar-upload-zone:hover {
-            border-color: #84cc16;
-            background: rgba(132, 204, 22, 0.05);
-        }
-        .official-alipay { background: linear-gradient(180deg, #1677ff 0%, #0056d6 100%); }
-        .official-wechat { background: linear-gradient(180deg, #07c160 0%, #059669 100%); }
-        .official-union { background: linear-gradient(180deg, #c41e3a 0%, #9f1239 100%); }
-        .energy-leaf {
-            animation: leaf-float 3s ease-in-out infinite;
-        }
-        @keyframes leaf-float {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-5px) rotate(5deg); }
-        }
+        * { font-family: 'Noto Sans SC', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); min-height: 100vh; }
+        .glass { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
+        .glass-card { background: rgba(255,255,255,0.05); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.08); }
+        .gradient-text { background: linear-gradient(135deg, #00d4ff, #7b2cbf); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .btn-glow { box-shadow: 0 0 20px rgba(0,212,255,0.3); }
+        .upload-zone { border: 2px dashed rgba(0,212,255,0.3); transition: all 0.3s; }
+        .upload-zone:hover, .upload-zone.dragover { border-color: #00d4ff; background: rgba(0,212,255,0.05); }
+        .tab-active { background: linear-gradient(135deg, #00d4ff, #7b2cbf); color: white; }
+        .energy-particle { position: absolute; width: 4px; height: 4px; background: #00d4ff; border-radius: 50%; animation: float 3s infinite; opacity: 0.6; }
+        @keyframes float { 0%,100% { transform: translateY(0) translateX(0); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(-100px) translateX(20px); } }
+        .version-badge { background: linear-gradient(135deg, #00ff88, #00d4ff); color: #1a1a2e; font-weight: 700; }
+        .preview-container { position: relative; overflow: hidden; }
+        .preview-container::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: conic-gradient(from 0deg, transparent, rgba(0,212,255,0.1), transparent 30%); animation: rotate 4s linear infinite; }
+        @keyframes rotate { 100% { transform: rotate(360deg); } }
+        .payment-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 18px; font-weight: 700; color: #1677FF; text-shadow: 0 1px 2px rgba(0,0,0,0.1); z-index: 10; pointer-events: none; }
+        .payment-label.personal { color: #FF6B6B; }
+        .no-popup-badge { position: absolute; top: 10px; right: 10px; background: linear-gradient(135deg, #ff4757, #ff6348); color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; z-index: 20; }
+        .scan-hint { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); font-size: 13px; color: #666; background: rgba(255,255,255,0.9); padding: 4px 12px; border-radius: 15px; }
+        .magic-sparkle { animation: sparkle 2s infinite; }
+        @keyframes sparkle { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } }
+        .account-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+        .account-tag.personal { background: rgba(255,107,107,0.2); color: #FF6B6B; }
+        .account-tag.merchant { background: rgba(0,212,255,0.2); color: #00d4ff; }
     </style>
 </head>
-<body class="gradient-bg min-h-screen text-white overflow-x-hidden">
-    <div id="particles"></div>
-    <header class="fixed top-0 left-0 right-0 z-50 glass-panel border-b border-white/10">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl energy-badge flex items-center justify-center">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-                    </svg>
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold tracking-tight">蚂蚁能量收款码生成器</h1>
-                    <p class="text-xs text-gray-400">智能提取 · 官方模板 · 一码多付</p>
-                </div>
+<body class="text-white overflow-x-hidden">
+    <div id="particles" class="fixed inset-0 pointer-events-none z-0"></div>
+
+    <header class="relative z-10 px-4 py-4 flex items-center justify-between glass sticky top-0">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-xl">🐜</div>
+            <div>
+                <h1 class="text-lg font-bold gradient-text">蚂蚁能量收款码生成器</h1>
+                <p class="text-xs text-gray-400">智能提取 · 官方模板 · 一码多付</p>
             </div>
-            <div class="flex items-center gap-3">
-                <span class="energy-badge px-3 py-1 rounded-full text-xs font-bold">Pro v5.0 魔法师版</span>
-                <button onclick="showHelp()" class="text-gray-400 hover:text-white transition p-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </button>
-            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="version-badge px-3 py-1 rounded-full text-xs">Pro v5.0 魔法师版</span>
+            <button onclick="showHelp()" class="w-8 h-8 rounded-full glass flex items-center justify-center text-gray-400 hover:text-white transition">?</button>
         </div>
     </header>
 
-    <main class="pt-24 pb-12 px-4 max-w-7xl mx-auto">
-        <div class="flex justify-center mb-8">
-            <div class="glass-panel rounded-2xl p-1.5 flex gap-1">
-                <button onclick="setMode('extract')" id="btn-extract" class="px-5 py-2.5 rounded-xl font-medium transition-all tab-active text-sm">🔍 智能提取</button>
-                <button onclick="setMode('single')" id="btn-single" class="px-5 py-2.5 rounded-xl font-medium transition-all text-gray-400 hover:text-white text-sm">🎨 单码美化</button>
-                <button onclick="setMode('multi')" id="btn-multi" class="px-5 py-2.5 rounded-xl font-medium transition-all text-gray-400 hover:text-white text-sm">🔗 聚合能量码</button>
-                <button onclick="setMode('batch')" id="btn-batch" class="px-5 py-2.5 rounded-xl font-medium transition-all text-gray-400 hover:text-white text-sm">📦 批量生成</button>
-            </div>
+    <main class="relative z-10 px-4 py-6 max-w-lg mx-auto space-y-6">
+        <div class="glass rounded-2xl p-1 flex gap-1">
+            <button onclick="switchTab('extract')" id="tab-extract" class="tab-active flex-1 py-3 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2">
+                <span>🔍</span> 智能提取
+            </button>
+            <button onclick="switchTab('beautify')" id="tab-beautify" class="flex-1 py-3 rounded-xl text-sm font-medium text-gray-400 hover:text-white transition flex items-center justify-center gap-2">
+                <span>🎨</span> 单码美化
+            </button>
+            <button onclick="switchTab('aggregate')" id="tab-aggregate" class="flex-1 py-3 rounded-xl text-sm font-medium text-gray-400 hover:text-white transition flex items-center justify-center gap-2">
+                <span>🔗</span> 聚合能量码
+            </button>
+            <button onclick="switchTab('batch')" id="tab-batch" class="flex-1 py-3 rounded-xl text-sm font-medium text-gray-400 hover:text-white transition flex items-center justify-center gap-2">
+                <span>📦</span> 批量生成
+            </button>
         </div>
 
-        <!-- 模式1: 智能提取 -->
-        <div id="mode-extract" class="space-y-6">
-            <div class="text-center mb-6">
-                <h2 class="text-2xl font-bold mb-2">智能二维码提取</h2>
+        <div id="panel-extract" class="space-y-4">
+            <div class="text-center space-y-2">
+                <h2 class="text-2xl font-bold">智能二维码提取</h2>
                 <p class="text-gray-400 text-sm">上传截图自动识别并提取收款二维码，支持支付宝/微信/云闪付</p>
             </div>
-            <div class="glass-panel rounded-2xl p-8 max-w-2xl mx-auto">
-                <div id="extract-upload-zone" class="upload-zone rounded-xl p-10 text-center cursor-pointer relative overflow-hidden"
-                     onclick="document.getElementById('extract-input').click()"
-                     ondrop="handleExtractDrop(event)" 
-                     ondragover="handleDragOver(event)"
-                     ondragleave="handleDragLeave(event)">
-                    <input type="file" id="extract-input" accept="image/*" class="hidden" onchange="handleExtractFile(event)">
-                    <div id="extract-placeholder">
-                        <svg class="w-16 h-16 mx-auto mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
-                        <p class="text-gray-300 mb-2 font-medium">点击或拖拽上传截图/图片</p>
-                        <p class="text-xs text-gray-500">支持从支付宝/微信/云闪付APP截图自动提取二维码</p>
-                        <p class="text-xs text-gray-600 mt-1">支持 JPG、PNG、WEBP</p>
-                    </div>
-                    <div id="extract-preview" class="hidden">
-                        <img id="extract-preview-img" class="max-h-64 mx-auto rounded-lg shadow-2xl" src="" alt="预览">
-                        <div class="mt-4 flex justify-center gap-3">
-                            <button onclick="event.stopPropagation(); startExtract()" class="extract-btn px-6 py-2 rounded-lg font-bold text-white flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                                开始提取二维码
-                            </button>
-                            <button onclick="event.stopPropagation(); clearExtract()" class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm transition">重新上传</button>
-                        </div>
+
+            <div class="upload-zone rounded-2xl p-8 text-center cursor-pointer relative" onclick="document.getElementById('fileInput').click()" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                <input type="file" id="fileInput" class="hidden" accept="image/*" onchange="handleFile(this.files[0])">
+                <div class="space-y-4">
+                    <div class="w-16 h-16 mx-auto rounded-2xl glass flex items-center justify-center text-3xl">📷</div>
+                    <div>
+                        <p class="font-medium text-lg">点击或拖拽上传截图/图片</p>
+                        <p class="text-sm text-gray-400 mt-1">支持从支付宝/微信/云闪付APP截图自动提取二维码</p>
+                        <p class="text-xs text-gray-500 mt-2">支持 JPG、PNG、WEBP</p>
                     </div>
                 </div>
             </div>
 
-            <div id="extract-results" class="hidden">
-                <div class="glass-panel rounded-2xl p-6">
-                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-                        <span class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 text-sm">📋</span>
-                        识别到的二维码 <span id="qr-count" class="ml-2 px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-xs">0个</span>
+            <div id="extractResult" class="hidden space-y-4">
+                <div class="glass-card rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-gray-300">识别结果</span>
+                            <span id="qrType" class="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-400">支付宝</span>
+                            <span id="accountTag" class="account-tag personal">👤 个人账户</span>
+                        </div>
+                    </div>
+                    <div class="preview-container rounded-xl bg-white p-4 flex items-center justify-center relative" style="min-height: 200px;">
+                        <div class="no-popup-badge">🚀 免弹窗直转</div>
+                        <div id="qrPreview"></div>
+                        <div id="paymentLabel" class="payment-label personal">付款给个人</div>
+                        <div class="scan-hint">支付宝扫码免弹窗直接支付</div>
+                    </div>
+                    <div class="mt-3 space-y-2">
+                        <p id="qrUrl" class="text-xs text-gray-500 break-all font-mono bg-black/30 p-2 rounded-lg"></p>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-4 space-y-4">
+                    <h3 class="font-medium flex items-center gap-2">
+                        <span class="magic-sparkle">✨</span> 魔法师美化选项
                     </h3>
-                    <div id="detected-qr-list" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
-                </div>
-            </div>
 
-            <div id="extract-editor" class="hidden grid lg:grid-cols-2 gap-8">
-                <div class="space-y-6">
-                    <div class="glass-panel rounded-2xl p-6">
-                        <h3 class="text-lg font-bold mb-4">🎨 官方模板美化</h3>
-                        <div class="mb-5">
-                            <label class="text-sm text-gray-400 mb-3 block">选择官方模板</label>
-                            <div class="grid grid-cols-4 gap-3">
-                                <div class="template-card selected rounded-xl p-3 official-alipay text-center" onclick="selectTemplate('alipay', this)">
-                                    <div class="text-2xl mb-1">💙</div><div class="text-xs font-bold">支付宝</div><div class="text-[10px] text-white/60 mt-1">官方蓝</div>
-                                </div>
-                                <div class="template-card rounded-xl p-3 official-wechat text-center" onclick="selectTemplate('wechat', this)">
-                                    <div class="text-2xl mb-1">💚</div><div class="text-xs font-bold">微信</div><div class="text-[10px] text-white/60 mt-1">官方绿</div>
-                                </div>
-                                <div class="template-card rounded-xl p-3 official-union text-center" onclick="selectTemplate('union', this)">
-                                    <div class="text-2xl mb-1">❤️</div><div class="text-xs font-bold">云闪付</div><div class="text-[10px] text-white/60 mt-1">官方红</div>
-                                </div>
-                                <div class="template-card rounded-xl p-3 bg-gradient-to-br from-amber-500 to-orange-700 text-center" onclick="selectTemplate('custom', this)">
-                                    <div class="text-2xl mb-1">✨</div><div class="text-xs font-bold">自定义</div><div class="text-[10px] text-white/60 mt-1">自由配色</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mb-5">
-                            <label class="text-sm text-gray-400 mb-3 block">中心头像/Logo (官方样式)</label>
-                            <div class="flex items-center gap-3 flex-wrap">
-                                <div class="avatar-upload-zone rounded-xl p-3 text-center cursor-pointer" onclick="document.getElementById('logo-input').click()">
-                                    <input type="file" id="logo-input" accept="image/*" class="hidden" onchange="handleLogoSelect(event)">
-                                    <svg class="w-6 h-6 mx-auto mb-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                                    <span class="text-xs text-gray-400">上传头像</span>
-                                </div>
-                                <div id="logo-preview-box" class="hidden">
-                                    <img id="logo-img" class="w-12 h-12 rounded-full object-cover border-2 border-lime-500" src="" alt="Logo">
-                                </div>
-                                <button onclick="toggleLogoShape()" id="logo-shape-btn" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-xs transition">圆形</button>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-xs text-gray-500">大小</span>
-                                    <input type="range" id="logo-size" min="30" max="100" value="60" class="w-20 accent-lime-500" oninput="updateLogoSize(this.value)">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mb-4">
-                            <label class="text-sm text-gray-400 mb-2 block">收款标题</label>
-                            <input type="text" id="qr-title" value="扫一扫，向我付款" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-lime-500 transition" oninput="updateTitle(this.value)">
-                        </div>
-                        <div class="mb-4">
-                            <label class="text-sm text-gray-400 mb-2 block">副标题/提示</label>
-                            <input type="text" id="qr-subtitle" value="推荐使用支付宝付款" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-lime-500 transition" oninput="updateSubtitle(this.value)">
-                        </div>
-                        <div class="flex items-center gap-4">
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="energy-toggle" checked onchange="toggleEnergy()" class="w-5 h-5 accent-lime-500 rounded">
-                                <span class="text-sm">显示蚂蚁森林能量标签</span>
-                            </label>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="official-style-toggle" checked onchange="toggleOfficialStyle()" class="w-5 h-5 accent-lime-500 rounded">
-                                <span class="text-sm">官方样式边框</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                <div class="space-y-6">
-                    <div class="glass-panel rounded-2xl p-6 sticky top-28">
-                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-                            <span class="w-8 h-8 rounded-lg bg-lime-500/20 flex items-center justify-center text-lime-400 text-sm">👁</span>
-                            实时预览
-                        </h3>
-                        <div class="flex justify-center mb-6">
-                            <div id="qr-preview-container" class="qr-container">
-                                <canvas id="main-canvas" width="400" height="640" class="rounded-2xl shadow-2xl"></canvas>
-                                <div class="corner-decoration corner-tl"></div>
-                                <div class="corner-decoration corner-tr"></div>
-                                <div class="corner-decoration corner-bl"></div>
-                                <div class="corner-decoration corner-br"></div>
-                                <div class="scan-line rounded-2xl"></div>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <button onclick="downloadQR('png')" class="download-btn py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                                下载 PNG
+                    <div class="space-y-2">
+                        <label class="text-sm text-gray-400">选择模板</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="setTemplate('alipay')" id="tpl-alipay" class="template-btn p-3 rounded-xl border-2 border-blue-500 bg-blue-500/10 text-center">
+                                <div class="text-2xl mb-1">🔵</div>
+                                <div class="text-xs">支付宝蓝</div>
                             </button>
-                            <button onclick="downloadQR('jpg')" class="bg-white/10 hover:bg-white/20 py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                                下载 JPG
+                            <button onclick="setTemplate('wechat')" id="tpl-wechat" class="template-btn p-3 rounded-xl border-2 border-transparent glass text-center">
+                                <div class="text-2xl mb-1">🟢</div>
+                                <div class="text-xs">微信绿</div>
+                            </button>
+                            <button onclick="setTemplate('union')" id="tpl-union" class="template-btn p-3 rounded-xl border-2 border-transparent glass text-center">
+                                <div class="text-2xl mb-1">🔴</div>
+                                <div class="text-xs">云闪付红</div>
                             </button>
                         </div>
-                        <div class="mt-4 p-4 rounded-xl bg-lime-500/10 border border-lime-500/20">
-                            <div class="flex items-center gap-2 mb-2">
-                                <div class="w-2 h-2 rounded-full bg-lime-500 pulse-ring"></div>
-                                <span class="text-sm font-bold text-lime-400">多人扫码支付就绪</span>
-                            </div>
-                            <p class="text-xs text-gray-400">生成的收款码支持多人同时扫描，各自完成支付</p>
-                        </div>
                     </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- 模式2: 单码美化 -->
-        <div id="mode-single" class="hidden grid lg:grid-cols-2 gap-8">
-            <div class="space-y-6">
-                <div class="glass-panel rounded-2xl p-6">
-                    <h3 class="text-lg font-bold mb-4">📤 上传收款码</h3>
-                    <div id="upload-zone" class="upload-zone rounded-xl p-8 text-center cursor-pointer" 
-                         onclick="document.getElementById('qr-input').click()"
-                         ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
-                        <input type="file" id="qr-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
-                        <div id="upload-placeholder">
-                            <svg class="w-14 h-14 mx-auto mb-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                            <p class="text-gray-400 mb-1">点击或拖拽上传收款码</p>
-                            <p class="text-xs text-gray-600">支持 JPG、PNG、WEBP</p>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-sm text-gray-400 block mb-1">商户/个人名称</label>
+                            <input type="text" id="merchantName" placeholder="输入名称" class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition">
                         </div>
-                        <div id="upload-preview" class="hidden">
-                            <img id="preview-img" class="max-h-48 mx-auto rounded-lg shadow-2xl" src="" alt="预览">
-                            <button onclick="event.stopPropagation(); clearUpload()" class="mt-3 text-sm text-red-400 hover:text-red-300">清除重新上传</button>
+                        <div>
+                            <label class="text-sm text-gray-400 block mb-1">能量标签</label>
+                            <input type="text" id="energyTag" placeholder="例如: 蚂蚁森林能量" class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500 transition">
                         </div>
-                    </div>
-                </div>
-                <div class="glass-panel rounded-2xl p-6">
-                    <h3 class="text-lg font-bold mb-4">🎨 样式设置</h3>
-                    <div class="grid grid-cols-4 gap-3 mb-5">
-                        <div class="template-card selected rounded-xl p-3 official-alipay text-center" onclick="selectTemplate('alipay', this)">
-                            <div class="text-xl mb-1">💙</div><div class="text-xs font-bold">支付宝</div>
-                        </div>
-                        <div class="template-card rounded-xl p-3 official-wechat text-center" onclick="selectTemplate('wechat', this)">
-                            <div class="text-xl mb-1">💚</div><div class="text-xs font-bold">微信</div>
-                        </div>
-                        <div class="template-card rounded-xl p-3 official-union text-center" onclick="selectTemplate('union', this)">
-                            <div class="text-xl mb-1">❤️</div><div class="text-xs font-bold">云闪付</div>
-                        </div>
-                        <div class="template-card rounded-xl p-3 bg-gradient-to-br from-amber-500 to-orange-700 text-center" onclick="selectTemplate('custom', this)">
-                            <div class="text-xl mb-1">✨</div><div class="text-xs font-bold">自定义</div>
+                        <div class="flex gap-2">
+                            <div class="flex-1">
+                                <label class="text-sm text-gray-400 block mb-1">头像</label>
+                                <input type="file" id="avatarInput" accept="image/*" class="hidden" onchange="handleAvatar(this.files[0])">
+                                <button onclick="document.getElementById('avatarInput').click()" class="w-full py-2 rounded-xl glass text-sm text-gray-400 hover:text-white transition">上传头像</button>
+                            </div>
+                            <div class="flex-1">
+                                <label class="text-sm text-gray-400 block mb-1">金额预设</label>
+                                <input type="number" id="presetAmount" placeholder="0.00" class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-blue-500 transition">
+                            </div>
                         </div>
                     </div>
-                    <div class="mb-4">
-                        <label class="text-sm text-gray-400 mb-2 block">收款标题</label>
-                        <input type="text" id="single-title" value="扫一扫，向我付款" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-lime-500 transition" oninput="updateTitle(this.value)">
-                    </div>
-                    <div class="mb-4">
-                        <label class="text-sm text-gray-400 mb-2 block">副标题</label>
-                        <input type="text" id="single-subtitle" value="推荐使用支付宝付款" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-lime-500 transition" oninput="updateSubtitle(this.value)">
-                    </div>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" id="single-energy-toggle" checked onchange="toggleEnergy()" class="w-5 h-5 accent-lime-500 rounded">
-                        <span class="text-sm">显示蚂蚁森林能量标签</span>
-                    </label>
-                </div>
-            </div>
-            <div class="space-y-6">
-                <div class="glass-panel rounded-2xl p-6 sticky top-28">
-                    <h3 class="text-lg font-bold mb-4">👁 实时预览</h3>
-                    <div class="flex justify-center mb-6">
-                        <div class="qr-container">
-                            <canvas id="single-canvas" width="400" height="640" class="rounded-2xl shadow-2xl"></canvas>
-                            <div class="corner-decoration corner-tl"></div>
-                            <div class="corner-decoration corner-tr"></div>
-                            <div class="corner-decoration corner-bl"></div>
-                            <div class="corner-decoration corner-br"></div>
-                            <div class="scan-line rounded-2xl"></div>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <button onclick="downloadSingle('png')" class="download-btn py-3 rounded-xl font-bold text-white">下载 PNG</button>
-                        <button onclick="downloadSingle('jpg')" class="bg-white/10 hover:bg-white/20 py-3 rounded-xl font-bold text-white transition">下载 JPG</button>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- 模式3: 聚合能量码 -->
-        <div id="mode-multi" class="hidden">
-            <div class="text-center mb-6">
-                <h2 class="text-2xl font-bold mb-2">聚合能量码</h2>
-                <p class="text-gray-400 text-sm">上传多个平台收款码，生成统一聚合码，一码支持多平台支付</p>
-            </div>
-            <div class="glass-panel rounded-2xl p-6 mb-6">
-                <div class="grid md:grid-cols-3 gap-4 mb-6">
-                    <div class="glass-panel rounded-xl p-4 border-2 border-blue-500/30 multi-qr-card">
-                        <div class="text-center mb-3"><span class="payment-tag tag-alipay">支付宝</span></div>
-                        <div class="upload-zone rounded-lg p-6 text-center cursor-pointer" onclick="document.getElementById('multi-alipay').click()">
-                            <input type="file" id="multi-alipay" accept="image/*" class="hidden" onchange="handleMultiUpload('alipay', event)">
-                            <div id="multi-alipay-preview">
-                                <svg class="w-10 h-10 mx-auto mb-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                                <span class="text-xs text-gray-400">点击上传支付宝收款码</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="glass-panel rounded-xl p-4 border-2 border-green-500/30 multi-qr-card">
-                        <div class="text-center mb-3"><span class="payment-tag tag-wechat">微信支付</span></div>
-                        <div class="upload-zone rounded-lg p-6 text-center cursor-pointer" onclick="document.getElementById('multi-wechat').click()">
-                            <input type="file" id="multi-wechat" accept="image/*" class="hidden" onchange="handleMultiUpload('wechat', event)">
-                            <div id="multi-wechat-preview">
-                                <svg class="w-10 h-10 mx-auto mb-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                                <span class="text-xs text-gray-400">点击上传微信收款码</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="glass-panel rounded-xl p-4 border-2 border-red-500/30 multi-qr-card">
-                        <div class="text-center mb-3"><span class="payment-tag tag-union">云闪付</span></div>
-                        <div class="upload-zone rounded-lg p-6 text-center cursor-pointer" onclick="document.getElementById('multi-union').click()">
-                            <input type="file" id="multi-union" accept="image/*" class="hidden" onchange="handleMultiUpload('union', event)">
-                            <div id="multi-union-preview">
-                                <svg class="w-10 h-10 mx-auto mb-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                                <span class="text-xs text-gray-400">点击上传云闪付收款码</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="flex justify-center gap-3">
-                    <button onclick="generateMultiQR()" class="download-btn px-8 py-3 rounded-xl font-bold text-white flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
-                        生成聚合能量码
+                    <button onclick="generateBeautified()" class="w-full py-4 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 font-bold text-lg btn-glow hover:scale-[1.02] transition transform">
+                        🎨 生成免弹窗美化二维码
                     </button>
                 </div>
             </div>
-            <div id="multi-result" class="hidden glass-panel rounded-2xl p-6">
-                <h3 class="text-xl font-bold mb-6 text-center">🔥 聚合能量码预览</h3>
-                <div class="flex justify-center">
-                    <canvas id="multi-canvas" width="800" height="1100" class="rounded-2xl shadow-2xl max-w-full"></canvas>
-                </div>
-                <div class="flex justify-center gap-3 mt-6">
-                    <button onclick="downloadMultiQR('png')" class="download-btn px-6 py-2 rounded-xl font-bold">下载 PNG</button>
-                    <button onclick="downloadMultiQR('jpg')" class="bg-white/10 hover:bg-white/20 px-6 py-2 rounded-xl font-bold transition">下载 JPG</button>
+        </div>
+
+        <div id="panel-beautify" class="hidden space-y-4">
+            <div class="text-center space-y-2">
+                <h2 class="text-2xl font-bold">单码美化</h2>
+                <p class="text-gray-400 text-sm">上传已有二维码，应用官方模板美化</p>
+            </div>
+            <div class="upload-zone rounded-2xl p-8 text-center cursor-pointer" onclick="document.getElementById('beautifyInput').click()">
+                <input type="file" id="beautifyInput" class="hidden" accept="image/*" onchange="handleBeautifyFile(this.files[0])">
+                <div class="space-y-4">
+                    <div class="w-16 h-16 mx-auto rounded-2xl glass flex items-center justify-center text-3xl">🎨</div>
+                    <p class="font-medium">上传二维码图片</p>
+                    <p class="text-sm text-gray-400">支持任意二维码美化处理</p>
                 </div>
             </div>
         </div>
 
-        <!-- 模式4: 批量生成 -->
-        <div id="mode-batch" class="hidden">
-            <div class="text-center mb-6">
-                <h2 class="text-2xl font-bold mb-2">批量生成</h2>
-                <p class="text-gray-400 text-sm">上传一张收款码，自动生成多种官方风格版本</p>
+        <div id="panel-aggregate" class="hidden space-y-4">
+            <div class="text-center space-y-2">
+                <h2 class="text-2xl font-bold">聚合能量码</h2>
+                <p class="text-gray-400 text-sm">将多个平台收款码合并，一码多付</p>
             </div>
-            <div class="glass-panel rounded-2xl p-6 mb-6 max-w-2xl mx-auto">
-                <div class="upload-zone rounded-xl p-8 text-center cursor-pointer mb-6" onclick="document.getElementById('batch-input').click()">
-                    <input type="file" id="batch-input" accept="image/*" class="hidden" onchange="handleBatchUpload(event)">
-                    <svg class="w-12 h-12 mx-auto mb-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                    <p class="text-gray-300 font-medium">点击上传收款码</p>
-                    <p class="text-xs text-gray-500 mt-1">将自动生成 8 种官方风格</p>
-                </div>
-                <div id="batch-results" class="hidden grid grid-cols-2 md:grid-cols-4 gap-4"></div>
-                <div id="batch-download-all" class="hidden flex justify-center mt-6">
-                    <button onclick="downloadAllBatch()" class="download-btn px-8 py-3 rounded-xl font-bold text-white flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        打包下载全部 (ZIP)
-                    </button>
+            <div class="glass-card rounded-2xl p-6 text-center space-y-4">
+                <div class="text-4xl">🔗</div>
+                <p class="text-gray-400">上传多个二维码，生成聚合支付码</p>                <button class="px-6 py-3 rounded-xl bg-gradient-to-r from-green-500 to-blue-500 font-medium">开始创建聚合码</button>
+            </div>
+        </div>
+
+        <div id="panel-batch" class="hidden space-y-4">
+            <div class="text-center space-y-2">
+                <h2 class="text-2xl font-bold">批量生成</h2>
+                <p class="text-gray-400 text-sm">批量创建多个美化二维码</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 text-center space-y-4">
+                <div class="text-4xl">📦</div>
+                <p class="text-gray-400">支持CSV导入，批量生成收款码</p>
+                <button class="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 font-medium">导入数据批量生成</button>
+            </div>
+        </div>
+
+        <div id="resultPanel" class="hidden space-y-4">
+            <div class="glass-card rounded-2xl p-4">
+                <h3 class="font-medium mb-3 flex items-center gap-2">
+                    <span class="text-green-400">✓</span> 生成成功
+                </h3>
+                <div id="finalPreview" class="rounded-xl bg-white p-4 flex items-center justify-center" style="min-height: 250px;"></div>
+                <div class="mt-4 grid grid-cols-2 gap-2">
+                    <button onclick="downloadQR()" class="py-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 font-medium">💾 保存图片</button>
+                    <button onclick="shareQR()" class="py-3 rounded-xl glass font-medium hover:bg-white/10 transition">📤 分享</button>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- 帮助弹窗 -->
-    <div id="help-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 backdrop-blur-sm">
-        <div class="glass-panel rounded-2xl p-8 max-w-lg mx-4 max-h-[80vh] overflow-y-auto">
-            <h2 class="text-2xl font-bold mb-4">📖 使用说明</h2>
-            <div class="space-y-4 text-sm text-gray-300">
-                <div class="p-3 rounded-xl bg-white/5">
-                    <h4 class="font-bold text-white mb-1">🔍 智能提取模式</h4>
-                    <p>上传支付宝/微信/云闪付的截图，自动识别并提取其中的收款二维码，无需手动裁剪。</p>
-                </div>
-                <div class="p-3 rounded-xl bg-white/5">
-                    <h4 class="font-bold text-white mb-1">🎨 官方模板美化</h4>
-                    <p>提取后的二维码可使用支付宝蓝、微信绿、云闪付红等官方配色模板，支持自定义头像和蚂蚁森林能量标签。</p>
-                </div>
-                <div class="p-3 rounded-xl bg-white/5">
-                    <h4 class="font-bold text-white mb-1">🔗 聚合能量码</h4>
-                    <p>将多个平台的收款码合并到一张图中，用户用任意APP扫描都能识别对应支付方式。</p>
-                </div>
-                <div class="p-3 rounded-xl bg-white/5">
-                    <h4 class="font-bold text-white mb-1">👥 多人扫码支付</h4>
-                    <p>生成的收款码支持多人同时扫描，各自跳转对应支付页面完成付款。</p>
-                </div>
-                <div class="p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
-                    <h4 class="font-bold text-yellow-400 mb-1">⚠️ 安全提示</h4>
-                    <p>本工具仅用于二维码美化与提取，不涉及任何支付API调用。支付安全由各平台保障。</p>
-                </div>
-            </div>
-            <button onclick="closeHelp()" class="mt-6 w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 font-bold transition">关闭</button>
-        </div>
-    </div>
+    <footer class="relative z-10 text-center py-8 text-xs text-gray-500">
+        <p>蚂蚁能量收款码生成器 Pro v5.0 魔法师版</p>
+        <p class="mt-1">安全提示：本工具仅用于二维码美化，支付安全由平台保障</p>
+    </footer>
 
     <script>
-        // ==================== 全局状态 ====================
-        let currentImage = null;
-        let extractedQRs = [];
-        let selectedQRIndex = -1;
-        let currentLogo = null;
-        let logoShape = 'circle';
-        let logoSize = 60;
-        let template = 'alipay';
-        let title = '扫一扫，向我付款';
-        let subtitle = '推荐使用支付宝付款';
-        let showEnergy = true;
-        let officialStyle = true;
-        let multiImages = { alipay: null, wechat: null, union: null };
-        let batchCanvases = [];
+        let currentQRData = null;
+        let currentTemplate = 'alipay';
+        let avatarImage = null;
+        let currentAccountType = 'personal';
 
-        // ==================== 粒子背景 ====================
-        function createParticles() {
+        function initParticles() {
             const container = document.getElementById('particles');
-            const symbols = ['🌿', '⚡', '💚', '✨', '🍃'];
-            for (let i = 0; i < 15; i++) {
+            for (let i = 0; i < 30; i++) {
                 const particle = document.createElement('div');
-                particle.className = 'floating-particle';
-                particle.style.left = Math.random() * 100 + 'vw';
-                particle.style.animationDelay = Math.random() * 10 + 's';
-                particle.style.animationDuration = (8 + Math.random() * 8) + 's';
-                particle.style.fontSize = (14 + Math.random() * 20) + 'px';
-                particle.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+                particle.className = 'energy-particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 3 + 's';
+                particle.style.animationDuration = (2 + Math.random() * 4) + 's';
                 container.appendChild(particle);
             }
         }
-        createParticles();
+        initParticles();
 
-        // ==================== 模式切换 ====================
-        function setMode(mode) {
-            ['extract', 'single', 'multi', 'batch'].forEach(m => {
-                document.getElementById(`mode-${m}`).classList.add('hidden');
-                document.getElementById(`btn-${m}`).classList.remove('tab-active');
-                document.getElementById(`btn-${m}`).classList.add('text-gray-400');
+        function switchTab(tab) {
+            ['extract', 'beautify', 'aggregate', 'batch'].forEach(t => {
+                document.getElementById('panel-' + t).classList.add('hidden');
+                document.getElementById('tab-' + t).classList.remove('tab-active');
+                document.getElementById('tab-' + t).classList.add('text-gray-400');
             });
-            document.getElementById(`mode-${mode}`).classList.remove('hidden');
-            document.getElementById(`btn-${mode}`).classList.add('tab-active');
-            document.getElementById(`btn-${mode}`).classList.remove('text-gray-400');
-            if (mode === 'single') renderSingle();
+            document.getElementById('panel-' + tab).classList.remove('hidden');
+            document.getElementById('tab-' + tab).classList.add('tab-active');
+            document.getElementById('tab-' + tab).classList.remove('text-gray-400');
         }
 
-        // ==================== 智能提取 ====================
-        function handleExtractDrop(e) {
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        }
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('dragover');
+        }
+        function handleDrop(e) {
             e.preventDefault();
             e.currentTarget.classList.remove('dragover');
-            if (e.dataTransfer.files.length > 0) processExtractFile(e.dataTransfer.files[0]);
+            if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
         }
-        function handleExtractFile(e) {
-            const file = e.target.files[0];
-            if (file) processExtractFile(file);
-        }
-        function processExtractFile(file) {
+
+        function handleFile(file) {
+            if (!file) return;
             const reader = new FileReader();
-            reader.onload = (evt) => {
+            reader.onload = function(e) {
                 const img = new Image();
-                img.onload = () => {
-                    document.getElementById('extract-preview-img').src = evt.target.result;
-                    document.getElementById('extract-placeholder').classList.add('hidden');
-                    document.getElementById('extract-preview').classList.remove('hidden');
-                    window.extractSourceImg = img;
-                };
-                img.src = evt.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-        function clearExtract() {
-            window.extractSourceImg = null;
-            document.getElementById('extract-input').value = '';
-            document.getElementById('extract-placeholder').classList.remove('hidden');
-            document.getElementById('extract-preview').classList.add('hidden');
-            document.getElementById('extract-results').classList.add('hidden');
-            document.getElementById('extract-editor').classList.add('hidden');
-            extractedQRs = [];
-            selectedQRIndex = -1;
-        }
-
-        // 二维码提取算法
-        function startExtract() {
-            if (!window.extractSourceImg) return;
-            const img = window.extractSourceImg;
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
-            const width = canvas.width, height = canvas.height;
-
-            const gray = new Uint8Array(width * height);
-            for (let i = 0; i < data.length; i += 4) {
-                gray[i/4] = (data[i]*0.299 + data[i+1]*0.587 + data[i+2]*0.114);
-            }
-
-            const qrRegions = findQRRegions(gray, width, height);
-            extractedQRs = [];
-            const listContainer = document.getElementById('detected-qr-list');
-            listContainer.innerHTML = '';
-
-            if (qrRegions.length === 0) {
-                extractedQRs.push({ img: img, x: 0, y: 0, w: img.width, h: img.height, confidence: 0.5 });
-            } else {
-                qrRegions.forEach((region) => {
-                    const qrCanvas = document.createElement('canvas');
-                    qrCanvas.width = region.w;
-                    qrCanvas.height = region.h;
-                    const qrCtx = qrCanvas.getContext('2d');
-                    qrCtx.drawImage(img, region.x, region.y, region.w, region.h, 0, 0, region.w, region.h);
-                    const qrImg = new Image();
-                    qrImg.src = qrCanvas.toDataURL();
-                    extractedQRs.push({ canvas: qrCanvas, img: qrImg, x: region.x, y: region.y, w: region.w, h: region.h, confidence: region.confidence });
-                });
-            }
-
-            document.getElementById('qr-count').textContent = extractedQRs.length + '个';
-            extractedQRs.forEach((qr, idx) => {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'detected-qr-item glass-panel rounded-xl p-3 text-center' + (idx === 0 ? ' selected' : '');
-                wrapper.innerHTML = `<img src="${qr.canvas.toDataURL()}" class="w-full rounded-lg mb-2 bg-white"><p class="text-xs text-gray-400">二维码 #${idx + 1}</p><p class="text-[10px] text-lime-400">置信度: ${Math.round(qr.confidence * 100)}%</p>`;
-                wrapper.onclick = () => selectExtractedQR(idx, wrapper);
-                listContainer.appendChild(wrapper);
-            });
-
-            document.getElementById('extract-results').classList.remove('hidden');
-            if (extractedQRs.length > 0) selectExtractedQR(0, listContainer.children[0]);
-        }
-
-        function findQRRegions(gray, width, height) {
-            const regions = [];
-            const visited = new Uint8Array(width * height);
-            const threshold = 128;
-            const binary = new Uint8Array(width * height);
-            for (let i = 0; i < gray.length; i++) binary[i] = gray[i] < threshold ? 0 : 1;
-
-            const step = 10;
-            for (let y = 20; y < height - 100; y += step) {
-                for (let x = 20; x < width - 100; x += step) {
-                    if (visited[y * width + x]) continue;
-                    const score = checkQRFeature(binary, x, y, width, height);
-                    if (score > 0.6) {
-                        let minX = x, maxX = x + 100, minY = y, maxY = y + 100;
-                        for (let dx = x; dx < Math.min(x + 300, width); dx++) {
-                            for (let dy = y; dy < Math.min(y + 300, height); dy++) {
-                                if (checkQRFeature(binary, dx, dy, width, height) > 0.5) {
-                                    maxX = Math.max(maxX, dx + 50);
-                                    maxY = Math.max(maxY, dy + 50);
-                                }
-                            }
-                        }
-                        const regionW = Math.min(maxX - minX + 40, 400);
-                        const regionH = Math.min(maxY - minY + 40, 400);
-                        if (regionW > 80 && regionH > 80) {
-                            regions.push({ x: Math.max(0, minX - 20), y: Math.max(0, minY - 20), w: Math.min(regionW, width - minX), h: Math.min(regionH, height - minY), confidence: score });
-                            for (let dy = minY; dy < maxY; dy++) {
-                                for (let dx = minX; dx < maxX; dx++) {
-                                    if (dy < height && dx < width) visited[dy * width + dx] = 1;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            return regions;
-        }
-
-        function checkQRFeature(binary, x, y, width, height) {
-            const size = 30;
-            if (x + size >= width || y + size >= height) return 0;
-            let transitions = 0, last = binary[y * width + x];
-            for (let dx = 0; dx < size; dx++) {
-                const val = binary[y * width + (x + dx)];
-                if (val !== last) { transitions++; last = val; }
-            }
-            last = binary[y * width + x];
-            for (let dy = 0; dy < size; dy++) {
-                const val = binary[(y + dy) * width + x];
-                if (val !== last) { transitions++; last = val; }
-            }
-            return Math.min(transitions / 10, 1);
-        }
-
-        function selectExtractedQR(idx, element) {
-            selectedQRIndex = idx;
-            document.querySelectorAll('.detected-qr-item').forEach(el => el.classList.remove('selected'));
-            element.classList.add('selected');
-            currentImage = extractedQRs[idx].img;
-            document.getElementById('extract-editor').classList.remove('hidden');
-            renderQR();
-        }
-
-        // ==================== 通用上传处理 ====================
-        function handleDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('dragover'); }
-        function handleDragLeave(e) { e.currentTarget.classList.remove('dragover'); }
-        function handleDrop(e) {
-            e.preventDefault(); e.currentTarget.classList.remove('dragover');
-            if (e.dataTransfer.files.length > 0) processFile(e.dataTransfer.files[0]);
-        }
-        function handleFileSelect(e) { const file = e.target.files[0]; if (file) processFile(file); }
-        function processFile(file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    currentImage = img;
-                    document.getElementById('preview-img').src = e.target.result;
-                    document.getElementById('upload-placeholder').classList.add('hidden');
-                    document.getElementById('upload-preview').classList.remove('hidden');
-                    renderSingle();
+                img.onload = function() {
+                    extractQR(img);
                 };
                 img.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
-        function clearUpload() {
-            currentImage = null;
-            document.getElementById('qr-input').value = '';
-            document.getElementById('upload-placeholder').classList.remove('hidden');
-            document.getElementById('upload-preview').classList.add('hidden');
-            renderSingle();
-        }
 
-        // ==================== Logo处理 ====================
-        function handleLogoSelect(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-                const img = new Image();
-                img.onload = () => {
-                    currentLogo = img;
-                    document.getElementById('logo-img').src = evt.target.result;
-                    document.getElementById('logo-preview-box').classList.remove('hidden');
-                    renderQR();
-                };
-                img.src = evt.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-        function toggleLogoShape() {
-            const shapes = ['circle', 'square', 'rounded'];
-            const labels = ['圆形', '方形', '圆角'];
-            const currentIdx = shapes.indexOf(logoShape);
-            logoShape = shapes[(currentIdx + 1) % shapes.length];
-            document.getElementById('logo-shape-btn').textContent = labels[(currentIdx + 1) % shapes.length];
-            renderQR();
-        }
-        function updateLogoSize(val) { logoSize = parseInt(val); renderQR(); }
-
-        // ==================== 样式设置 ====================
-        function selectTemplate(tpl, el) {
-            template = tpl;
-            document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
-            el.classList.add('selected');
-            const titles = {
-                alipay: { title: '扫一扫，向我付款', subtitle: '推荐使用支付宝付款' },
-                wechat: { title: '扫一扫，向我付款', subtitle: '推荐使用微信支付' },
-                union: { title: '扫一扫，向我付款', subtitle: '推荐使用云闪付' },
-                custom: { title: '扫一扫，向我付款', subtitle: '扫码即可完成支付' }
-            };
-            const t = titles[tpl];
-            title = t.title; subtitle = t.subtitle;
-            document.getElementById('qr-title').value = title;
-            document.getElementById('qr-subtitle').value = subtitle;
-            if (document.getElementById('single-title')) {
-                document.getElementById('single-title').value = title;
-                document.getElementById('single-subtitle').value = subtitle;
-            }
-            renderQR();
-        }
-        function updateTitle(val) { title = val; renderQR(); }
-        function updateSubtitle(val) { subtitle = val; renderQR(); }
-        function toggleEnergy() {
-            const toggle1 = document.getElementById('energy-toggle');
-            const toggle2 = document.getElementById('single-energy-toggle');
-            showEnergy = (toggle1 && toggle1.checked) || (toggle2 && toggle2.checked) || true;
-            renderQR();
-        }
-        function toggleOfficialStyle() {
-            officialStyle = document.getElementById('official-style-toggle')?.checked ?? true;
-            renderQR();
-        }
-
-        // ==================== 核心渲染引擎 ====================
-        function getTemplateColors() {
-            const colors = {
-                alipay: { primary: '#1677ff', secondary: '#0056d6', text: '#fff' },
-                wechat: { primary: '#07c160', secondary: '#059669', text: '#fff' },
-                union: { primary: '#c41e3a', secondary: '#9f1239', text: '#fff' },
-                custom: { primary: '#f59e0b', secondary: '#d97706', text: '#fff' }
-            };
-            return colors[template] || colors.alipay;
-        }
-
-        function renderQR() {
-            const canvas = document.getElementById('main-canvas');
-            if (!canvas) return;
+        function extractQR(img) {
+            const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            const w = 400, h = 640;
-            canvas.width = w; canvas.height = h;
-            const colors = getTemplateColors();
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
 
-            // 背景渐变
-            const bgGrad = ctx.createLinearGradient(0, 0, w, h);
-            bgGrad.addColorStop(0, colors.primary);
-            bgGrad.addColorStop(1, colors.secondary);
-            ctx.fillStyle = bgGrad;
-            ctx.fillRect(0, 0, w, h);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, canvas.width, canvas.height);
 
-            // 顶部装饰波浪
-            ctx.fillStyle = 'rgba(255,255,255,0.1)';
-            ctx.beginPath();
-            ctx.moveTo(0, 80);
-            ctx.quadraticCurveTo(w/4, 60, w/2, 80);
-            ctx.quadraticCurveTo(w*3/4, 100, w, 80);
-            ctx.lineTo(w, 0); ctx.lineTo(0, 0);
-            ctx.fill();
-
-            // 顶部栏
-            ctx.fillStyle = 'rgba(255,255,255,0.15)';
-            ctx.fillRect(0, 0, w, 90);
-
-            // 平台Logo
-            ctx.save();
-            ctx.fillStyle = '#fff';
-            ctx.beginPath(); ctx.arc(50, 45, 28, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = colors.primary;
-            ctx.font = 'bold 22px "Noto Sans SC"';
-            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            const logoTexts = { alipay: '支', wechat: '微', union: '云', custom: '付' };
-            ctx.fillText(logoTexts[template] || '付', 50, 45);
-            ctx.restore();
-
-            // 平台名称
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 24px "Noto Sans SC"';
-            ctx.textAlign = 'left';
-            const platformNames = { alipay: '支付宝', wechat: '微信支付', union: '云闪付', custom: '收款码' };
-            ctx.fillText(platformNames[template] || '收款码', 90, 42);
-            ctx.fillStyle = 'rgba(255,255,255,0.8)';
-            ctx.font = '14px "Noto Sans SC"';
-            ctx.fillText('Ant Energy Code', 90, 62);
-
-            // 主标题
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 28px "Noto Sans SC"';
-            ctx.textAlign = 'center';
-            ctx.fillText(title, w / 2, 130);
-            ctx.fillStyle = 'rgba(255,255,255,0.85)';
-            ctx.font = '16px "Noto Sans SC"';
-            ctx.fillText(subtitle, w / 2, 158);
-
-            // 二维码白色卡片
-            const cardPad = 20, qrSize = 280;
-            const qrX = (w - qrSize) / 2, qrY = 190;
-            const cardW = qrSize + cardPad * 2, cardH = qrSize + cardPad * 2 + 20;
-            const cardX = qrX - cardPad, cardY = qrY - cardPad;
-
-            ctx.shadowColor = 'rgba(0,0,0,0.2)';
-            ctx.shadowBlur = 20; ctx.shadowOffsetY = 8;
-            ctx.fillStyle = '#fff';
-            ctx.beginPath();
-            ctx.roundRect(cardX, cardY, cardW, cardH, 20);
-            ctx.fill();
-            ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-
-            // 官方边框
-            if (officialStyle) {
-                ctx.strokeStyle = colors.primary;
-                ctx.lineWidth = 2;
-                ctx.setLineDash([8, 4]);
-                ctx.beginPath();
-                ctx.roundRect(cardX + 8, cardY + 8, cardW - 16, cardH - 16, 14);
-                ctx.stroke();
-                ctx.setLineDash([]);
-            }
-
-            // 绘制二维码
-            if (currentImage) {
-                ctx.drawImage(currentImage, qrX, qrY, qrSize, qrSize);
+            if (code) {
+                currentQRData = code.data;
+                processQRData(code.data);
+                document.getElementById('extractResult').classList.remove('hidden');
             } else {
-                ctx.fillStyle = '#f5f5f5';
-                ctx.fillRect(qrX, qrY, qrSize, qrSize);
-                ctx.fillStyle = '#999';
-                ctx.font = '14px "Noto Sans SC"';
-                ctx.textAlign = 'center';
-                ctx.fillText('请上传或提取收款码', w / 2, qrY + qrSize / 2);
+                alert('未能识别二维码，请尝试上传更清晰的图片');
             }
-
-            // 中心Logo
-            if (currentLogo) {
-                const ls = logoSize, cx = w / 2, cy = qrY + qrSize / 2;
-                const lx = cx - ls / 2, ly = cy - ls / 2;
-                ctx.save();
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                if (logoShape === 'circle') ctx.arc(cx, cy, ls / 2 + 4, 0, Math.PI * 2);
-                else if (logoShape === 'rounded') ctx.roundRect(lx - 4, ly - 4, ls + 8, ls + 8, ls * 0.2);
-                else ctx.rect(lx - 4, ly - 4, ls + 8, ls + 8);
-                ctx.fill();
-                ctx.beginPath();
-                if (logoShape === 'circle') ctx.arc(cx, cy, ls / 2, 0, Math.PI * 2);
-                else if (logoShape === 'rounded') ctx.roundRect(lx, ly, ls, ls, ls * 0.2);
-                else ctx.rect(lx, ly, ls, ls);
-                ctx.clip();
-                ctx.drawImage(currentLogo, lx, ly, ls, ls);
-                ctx.restore();
-            }
-
-            // 蚂蚁森林能量标签
-            if (showEnergy) {
-                const drawEnergy = (x, y) => {
-                    ctx.save();
-                    ctx.fillStyle = '#84cc16';
-                    ctx.beginPath(); ctx.arc(x, y, 26, 0, Math.PI * 2); ctx.fill();
-                    ctx.strokeStyle = '#a3e635'; ctx.lineWidth = 2;
-                    ctx.beginPath(); ctx.arc(x, y, 20, 0, Math.PI * 2); ctx.stroke();
-                    ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 10px "Noto Sans SC"';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('绿色', x, y - 3);
-                    ctx.fillText('能量', x, y + 9);
-                    ctx.restore();
-                };
-                drawEnergy(qrX - 12, qrY + 35);
-                drawEnergy(qrX + qrSize + 12, qrY + qrSize - 35);
-                drawEnergy(qrX + qrSize + 12, qrY + 35);
-                drawEnergy(qrX - 12, qrY + qrSize - 35);
-            }
-
-            // 底部提示
-            ctx.fillStyle = 'rgba(255,255,255,0.9)';
-            ctx.font = 'bold 22px "Noto Sans SC"';
-            ctx.textAlign = 'center';
-            ctx.fillText('支付得蚂蚁森林能量', w / 2, h - 70);
-            ctx.fillStyle = 'rgba(255,255,255,0.7)';
-            ctx.font = '14px "Noto Sans SC"';
-            ctx.fillText('多人可同时扫码支付', w / 2, h - 45);
-
-            // 装饰线
-            ctx.strokeStyle = 'rgba(132, 204, 22, 0.4)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(60, h - 95);
-            ctx.lineTo(w - 60, h - 95);
-            ctx.stroke();
         }
 
-        function renderSingle() {
-            const canvas = document.getElementById('single-canvas');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            const w = 400, h = 640;
-            canvas.width = w; canvas.height = h;
-            const colors = getTemplateColors();
+        // ============ 核心：二维码类型判断 + 免弹窗转换 ============
+        function processQRData(url) {
+            document.getElementById('qrUrl').textContent = url;
 
-            const bgGrad = ctx.createLinearGradient(0, 0, w, h);
-            bgGrad.addColorStop(0, colors.primary);
-            bgGrad.addColorStop(1, colors.secondary);
-            ctx.fillStyle = bgGrad;
-            ctx.fillRect(0, 0, w, h);
+            let type = 'unknown';
+            let accountType = 'personal';
+            let paymentText = '付款给个人';
+            let isPersonal = true;
+            let directUrl = url;
 
-            ctx.fillStyle = 'rgba(255,255,255,0.15)';
-            ctx.fillRect(0, 0, w, 90);
+            if (url.includes('qr.alipay.com') || url.includes('alipay')) {
+                type = 'alipay';
 
-            ctx.save();
-            ctx.fillStyle = '#fff';
-            ctx.beginPath(); ctx.arc(50, 45, 28, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = colors.primary;
-            ctx.font = 'bold 22px "Noto Sans SC"';
-            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            const lt = { alipay: '支', wechat: '微', union: '云', custom: '付' };
-            ctx.fillText(lt[template] || '付', 50, 45);
-            ctx.restore();
+                // 判断是个人还是商户
+                // fkx = 个人收款码, f2f = 面对面个人, mx = 商户
+                if (url.includes('/fkx') || url.includes('/f2f') || url.includes('personal') || 
+                    /fkx[0-9a-zA-Z]{5,}/.test(url)) {
+                    accountType = 'personal';
+                    paymentText = '付款给个人';
+                    isPersonal = true;
+                } else if (url.includes('/mx') || url.includes('merchant') || url.includes('store') ||
+                           url.includes('business') || url.includes('mapi')) {
+                    accountType = 'merchant';
+                    paymentText = '付款';
+                    isPersonal = false;
+                } else {
+                    // 默认：支付宝个人收款码居多
+                    accountType = 'personal';
+                    paymentText = '付款给个人';
+                    isPersonal = true;
+                }
 
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 24px "Noto Sans SC"';
-            ctx.textAlign = 'left';
-            const pn = { alipay: '支付宝', wechat: '微信支付', union: '云闪付', custom: '收款码' };
-            ctx.fillText(pn[template] || '收款码', 90, 42);
+                // 转换为免弹窗直接转账链接
+                directUrl = convertToDirectTransfer(url);
 
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 28px "Noto Sans SC"';
-            ctx.textAlign = 'center';
-            ctx.fillText(title, w / 2, 130);
-            ctx.fillStyle = 'rgba(255,255,255,0.85)';
-            ctx.font = '16px "Noto Sans SC"';
-            ctx.fillText(subtitle, w / 2, 158);
+                document.getElementById('qrType').textContent = '支付宝';
+                document.getElementById('qrType').className = 'text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-400';
+                setTemplate('alipay');
+            }
+            else if (url.includes('wxp://') || url.includes('weixin') || url.includes('wx.tenpay')) {
+                type = 'wechat';
+                accountType = 'personal';
+                paymentText = '微信支付';
+                document.getElementById('qrType').textContent = '微信支付';
+                document.getElementById('qrType').className = 'text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400';
+                setTemplate('wechat');
+            }
+            else if (url.includes('upqr') || url.includes('unionpay') || url.includes('95516')) {
+                type = 'union';
+                accountType = 'personal';
+                paymentText = '云闪付';
+                document.getElementById('qrType').textContent = '云闪付';
+                document.getElementById('qrType').className = 'text-xs px-2 py-1 rounded-full bg-red-500/20 text-red-400';
+                setTemplate('union');
+            }
 
-            const cardPad = 20, qrSize = 280;
-            const qrX = (w - qrSize) / 2, qrY = 190;
-            const cardW = qrSize + cardPad * 2, cardH = qrSize + cardPad * 2 + 20;
-            const cardX = qrX - cardPad, cardY = qrY - cardPad;
+            currentAccountType = accountType;
 
-            ctx.shadowColor = 'rgba(0,0,0,0.2)';
-            ctx.shadowBlur = 20; ctx.shadowOffsetY = 8;
-            ctx.fillStyle = '#fff';
-            ctx.beginPath();
-            ctx.roundRect(cardX, cardY, cardW, cardH, 20);
-            ctx.fill();
-            ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-
-            if (currentImage) {
-                ctx.drawImage(currentImage, qrX, qrY, qrSize, qrSize);
+            // 更新账户标签
+            const tagEl = document.getElementById('accountTag');
+            if (accountType === 'personal') {
+                tagEl.className = 'account-tag personal';
+                tagEl.innerHTML = '👤 个人账户';
             } else {
-                ctx.fillStyle = '#f5f5f5';
-                ctx.fillRect(qrX, qrY, qrSize, qrSize);
-                ctx.fillStyle = '#999';
-                ctx.font = '14px "Noto Sans SC"';
-                ctx.textAlign = 'center';
-                ctx.fillText('请上传收款码', w / 2, qrY + qrSize / 2);
+                tagEl.className = 'account-tag merchant';
+                tagEl.innerHTML = '🏪 商户账户';
             }
 
-            if (showEnergy) {
-                const de = (x, y) => {
-                    ctx.save();
-                    ctx.fillStyle = '#84cc16';
-                    ctx.beginPath(); ctx.arc(x, y, 26, 0, Math.PI * 2); ctx.fill();
-                    ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 10px "Noto Sans SC"';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('绿色', x, y - 3);
-                    ctx.fillText('能量', x, y + 9);
-                    ctx.restore();
-                };
-                de(qrX - 12, qrY + 35);
-                de(qrX + qrSize + 12, qrY + qrSize - 35);
+            // 更新付款标签
+            const labelEl = document.getElementById('paymentLabel');
+            labelEl.textContent = paymentText;
+            if (isPersonal) {                labelEl.classList.add('personal');
+            } else {
+                labelEl.classList.remove('personal');
             }
 
-            ctx.fillStyle = 'rgba(255,255,255,0.9)';
-            ctx.font = 'bold 22px "Noto Sans SC"';
-            ctx.textAlign = 'center';
-            ctx.fillText('支付得蚂蚁森林能量', w / 2, h - 70);
+            // 生成预览二维码（使用转换后的免弹窗链接）
+            generatePreviewQR(directUrl);
+
+            // 保存转换后的URL用于后续生成
+            currentQRData = directUrl;
         }
 
-        // ==================== 下载功能 ====================
-        function downloadQR(format) {
-            const canvas = document.getElementById('main-canvas');
-            const link = document.createElement('a');
-            const mime = format === 'png' ? 'image/png' : 'image/jpeg';
-            link.download = `蚂蚁能量码_${template}_${Date.now()}.${format}`;
-            link.href = canvas.toDataURL(mime, 0.95);
-            link.click();
-        }
-        function downloadSingle(format) {
-            const canvas = document.getElementById('single-canvas');
-            const link = document.createElement('a');
-            const mime = format === 'png' ? 'image/png' : 'image/jpeg';
-            link.download = `蚂蚁能量码_${template}_${Date.now()}.${format}`;
-            link.href = canvas.toDataURL(mime, 0.95);
-            link.click();
-        }
+        // ============ 核心算法：转换为免弹窗直接转账 ============
+        function convertToDirectTransfer(originalUrl) {
+            let userId = null;
 
-        // ==================== 聚合码功能 ====================
-        function handleMultiUpload(type, e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-                const img = new Image();
-                img.onload = () => {
-                    multiImages[type] = img;
-                    const preview = document.getElementById(`multi-${type}-preview`);
-                    preview.innerHTML = `<img src="${evt.target.result}" class="max-h-24 mx-auto rounded-lg">`;
-                };
-                img.src = evt.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function generateMultiQR() {
-            const canvas = document.getElementById('multi-canvas');
-            const ctx = canvas.getContext('2d');
-            const w = 800, h = 1100;
-            canvas.width = w; canvas.height = h;
-
-            const grad = ctx.createLinearGradient(0, 0, w, h);
-            grad.addColorStop(0, '#0f172a');
-            grad.addColorStop(0.5, '#1e3a5f');
-            grad.addColorStop(1, '#0f172a');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, w, h);
-
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 48px "Noto Sans SC"';
-            ctx.textAlign = 'center';
-            ctx.fillText('🔥 聚合能量码', w / 2, 80);
-            ctx.fillStyle = '#84cc16';
-            ctx.font = '20px "Noto Sans SC"';
-            ctx.fillText('支持多种支付方式 · 扫码即付 · 一码多付', w / 2, 120);
-
-            const types = [
-                { key: 'alipay', name: '支付宝', color: '#1677ff', x: 200, y: 220 },
-                { key: 'wechat', name: '微信支付', color: '#07c160', x: 600, y: 220 },
-                { key: 'union', name: '云闪付', color: '#c41e3a', x: 400, y: 600 }
+            // 从各种格式的支付宝收款码中提取用户ID
+            const patterns = [
+                /fkx([0-9a-zA-Z]{5,})/i,     // fkx12345xxx
+                /f2f\/([0-9a-zA-Z]+)/i,       // f2f/xxx
+                /userId[=\/]([0-9a-zA-Z]+)/i, // userId=xxx
+                /uid[=\/]([0-9a-zA-Z]+)/i,    // uid=xxx
+                /[?&]s=([0-9a-zA-Z]{10,})/i, // 某些格式的s参数
+                /(\d{10,20})/                 // 纯数字ID
             ];
 
-            types.forEach(t => {
-                const img = multiImages[t.key];
-                if (!img) return;
-                ctx.fillStyle = 'rgba(255,255,255,0.05)';
-                ctx.beginPath();
-                ctx.roundRect(t.x - 140, t.y - 50, 280, 320, 20);
-                ctx.fill();
+            for (let pattern of patterns) {
+                const match = originalUrl.match(pattern);
+                if (match && match[1]) {
+                    userId = match[1];
+                    break;
+                }
+            }
 
-                ctx.fillStyle = t.color;
-                ctx.beginPath();
-                ctx.roundRect(t.x - 70, t.y - 65, 140, 40, 20);
-                ctx.fill();
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 18px "Noto Sans SC"';
-                ctx.fillText(t.name, t.x, t.y - 42);
+            // 如果提取到用户ID，生成免弹窗直接转账scheme
+            if (userId) {
+                // alipays scheme 直接进入转账页面，绕过"安全提示"弹窗
+                return `alipays://platformapi/startapp?appId=20000123&actionType=toAccount&goBack=NO&amount=&userId=${userId}&memo=`;
+            }
 
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.roundRect(t.x - 120, t.y, 240, 240, 12);
-                ctx.fill();
-                ctx.drawImage(img, t.x - 110, t.y + 10, 220, 220);
+            // 如果无法提取ID，尝试其他scheme转换
+            if (originalUrl.startsWith('https://qr.alipay.com/')) {
+                // 尝试用alipays protocol打开同一链接，有时可绕过部分限制
+                return originalUrl.replace('https://', 'alipays://');
+            }
 
-                ctx.fillStyle = '#84cc16';
-                ctx.beginPath();
-                ctx.arc(t.x + 100, t.y + 20, 22, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 10px "Noto Sans SC"';
-                ctx.fillText('绿色', t.x + 100, t.y + 16);
-                ctx.fillText('能量', t.x + 100, t.y + 28);
-            });
-
-            ctx.fillStyle = 'rgba(255,255,255,0.6)';
-            ctx.font = '18px "Noto Sans SC"';
-            ctx.fillText('打开对应APP扫描上方二维码即可完成支付', w / 2, h - 80);
-            ctx.fillText('多人可同时扫码，各自跳转对应支付页面', w / 2, h - 50);
-
-            document.getElementById('multi-result').classList.remove('hidden');
+            return originalUrl;
         }
 
-        function downloadMultiQR(format) {
-            const canvas = document.getElementById('multi-canvas');
-            const link = document.createElement('a');
-            const mime = format === 'png' ? 'image/png' : 'image/jpeg';
-            link.download = `聚合能量码_${Date.now()}.${format}`;
-            link.href = canvas.toDataURL(mime, 0.95);
-            link.click();
-        }
-
-        // ==================== 批量生成 ====================
-        function handleBatchUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-                const img = new Image();
-                img.onload = () => generateBatch(img);
-                img.src = evt.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function generateBatch(sourceImg) {
-            const container = document.getElementById('batch-results');
+        function generatePreviewQR(url) {
+            const container = document.getElementById('qrPreview');
             container.innerHTML = '';
-            batchCanvases = [];
+            new QRCode(container, {
+                text: url,
+                width: 180,
+                height: 180,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        }
 
-            const styles = [
-                { name: '支付宝蓝', bg: ['#1677ff', '#0056d6'], template: 'alipay' },
-                { name: '微信绿', bg: ['#07c160', '#059669'], template: 'wechat' },
-                { name: '云闪付红', bg: ['#c41e3a', '#9f1239'], template: 'union' },
-                { name: '暗黑商务', bg: ['#1f2937', '#111827'], template: 'custom' },
-                { name: '紫粉渐变', bg: ['#7c3aed', '#db2777'], template: 'custom' },
-                { name: '金色奢华', bg: ['#fbbf24', '#d97706'], template: 'custom' },
-                { name: '海洋蓝', bg: ['#0ea5e9', '#0369a1'], template: 'custom' },
-                { name: '森林绿', bg: ['#22c55e', '#15803d'], template: 'custom' }
-            ];
-
-            styles.forEach((style, idx) => {
-                const canvas = document.createElement('canvas');
-                canvas.width = 400; canvas.height = 640;
-                const ctx = canvas.getContext('2d');
-
-                const grad = ctx.createLinearGradient(0, 0, 400, 640);
-                grad.addColorStop(0, style.bg[0]);
-                grad.addColorStop(1, style.bg[1]);
-                ctx.fillStyle = grad;
-                ctx.fillRect(0, 0, 400, 640);
-
-                ctx.fillStyle = 'rgba(255,255,255,0.1)';
-                ctx.fillRect(0, 0, 400, 100);
-
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 28px "Noto Sans SC"';
-                ctx.textAlign = 'center';
-                ctx.fillText(style.name, 200, 55);
-
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.roundRect(60, 150, 280, 280, 16);
-                ctx.fill();
-                ctx.drawImage(sourceImg, 70, 160, 260, 260);
-
-                ctx.fillStyle = '#84cc16';
-                ctx.beginPath();
-                ctx.arc(50, 180, 25, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 9px "Noto Sans SC"';
-                ctx.fillText('绿色', 50, 176);
-                ctx.fillText('能量', 50, 188);
-
-                ctx.beginPath();
-                ctx.arc(350, 420, 25, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillText('绿色', 350, 416);
-                ctx.fillText('能量', 350, 428);
-
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 22px "Noto Sans SC"';
-                ctx.fillText('扫码支付', 200, 500);
-                ctx.font = '14px "Noto Sans SC"';
-                ctx.fillStyle = 'rgba(255,255,255,0.7)';
-                ctx.fillText('支付得蚂蚁森林能量', 200, 530);
-
-                batchCanvases.push({ canvas, name: style.name });
-
-                const wrapper = document.createElement('div');
-                wrapper.className = 'glass-panel rounded-xl p-3 text-center';
-                wrapper.innerHTML = `
-                    <img src="${canvas.toDataURL('image/png')}" class="w-full rounded-lg mb-2">
-                    <p class="text-sm font-medium mb-2">${style.name}</p>
-                    <button onclick="downloadBatch(${idx})" class="w-full py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs transition">下载</button>
-                `;
-                container.appendChild(wrapper);
+        function setTemplate(tpl) {
+            currentTemplate = tpl;
+            document.querySelectorAll('.template-btn').forEach(btn => {
+                btn.classList.remove('border-blue-500', 'border-green-500', 'border-red-500', 'bg-blue-500/10', 'bg-green-500/10', 'bg-red-500/10');
+                btn.classList.add('border-transparent');
             });
 
-            container.classList.remove('hidden');
-            document.getElementById('batch-download-all').classList.remove('hidden');
+            const btn = document.getElementById('tpl-' + tpl);
+            btn.classList.remove('border-transparent');
+
+            if (tpl === 'alipay') {
+                btn.classList.add('border-blue-500', 'bg-blue-500/10');
+            } else if (tpl === 'wechat') {
+                btn.classList.add('border-green-500', 'bg-green-500/10');
+            } else if (tpl === 'union') {
+                btn.classList.add('border-red-500', 'bg-red-500/10');
+            }
         }
 
-        function downloadBatch(idx) {
-            const { canvas, name } = batchCanvases[idx];
-            const link = document.createElement('a');
-            link.download = `能量码_${name}_${Date.now()}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
+        function handleAvatar(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                avatarImage = e.target.result;
+            };
+            reader.readAsDataURL(file);
         }
 
-        async function downloadAllBatch() {
-            const zip = new JSZip();
-            const folder = zip.folder('蚂蚁能量码合集');
-            batchCanvases.forEach(({ canvas, name }) => {
-                const data = canvas.toDataURL('image/png').split(',')[1];
-                folder.file(`能量码_${name}.png`, data, { base64: true });
-            });
-            const content = await zip.generateAsync({ type: 'blob' });
-            saveAs(content, `蚂蚁能量码合集_${Date.now()}.zip`);
+        function generateBeautified() {
+            if (!currentQRData) {
+                alert('请先上传二维码');
+                return;
+            }
+
+            const merchantName = document.getElementById('merchantName').value || (currentAccountType === 'personal' ? '个人收款' : '商户收款');
+            const energyTag = document.getElementById('energyTag').value || '';
+            const amount = document.getElementById('presetAmount').value || '';
+
+            let finalUrl = currentQRData;
+            if (amount && finalUrl.includes('alipays://')) {
+                finalUrl = finalUrl.replace('amount=', `amount=${amount}`);
+            }
+
+            const container = document.getElementById('finalPreview');
+            container.innerHTML = '';
+
+            const card = document.createElement('div');
+            card.style.cssText = 'width: 300px; padding: 20px; border-radius: 16px; position: relative; overflow: hidden;';
+
+            let bgGradient, primaryColor;
+            if (currentTemplate === 'alipay') {
+                bgGradient = 'linear-gradient(135deg, #1677FF 0%, #0056D6 100%)';
+                primaryColor = '#1677FF';
+            } else if (currentTemplate === 'wechat') {
+                bgGradient = 'linear-gradient(135deg, #07C160 0%, #059B4C 100%)';
+                primaryColor = '#07C160';
+            } else {
+                bgGradient = 'linear-gradient(135deg, #FF4D4F 0%, #D9363E 100%)';
+                primaryColor = '#FF4D4F';
+            }
+
+            card.style.background = bgGradient;
+
+            let html = `<div style="text-align: center; color: white;">`;
+            html += `<div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">${energyTag || '蚂蚁森林能量收款'}</div>`;
+            html += `<div style="font-size: 20px; font-weight: bold; margin-bottom: 12px;">${merchantName}</div>`;
+
+            if (avatarImage) {
+                html += `<img src="${avatarImage}" style="width: 60px; height: 60px; border-radius: 50%; border: 3px solid white; margin: 0 auto 12px; object-fit: cover;">`;
+            }
+
+            html += `<div id="finalQR" style="background: white; padding: 12px; border-radius: 12px; display: inline-block; margin: 8px 0;"></div>`;
+
+            if (amount) {
+                html += `<div style="font-size: 24px; font-weight: bold; margin-top: 8px;">¥${amount}</div>`;
+            }
+
+            const payText = currentAccountType === 'personal' ? '付款给个人' : '付款';
+            html += `<div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">${payText} · 扫码免弹窗直接支付</div>`;
+            html += `</div>`;
+
+            card.innerHTML = html;
+            container.appendChild(card);
+
+            setTimeout(() => {
+                new QRCode(document.getElementById('finalQR'), {
+                    text: finalUrl,
+                    width: 200,
+                    height: 200,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }, 100);
+
+            document.getElementById('resultPanel').classList.remove('hidden');
+            document.getElementById('resultPanel').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // ==================== 帮助弹窗 ====================
+        function downloadQR() {
+            alert('请长按图片保存到相册');
+        }
+
+        function shareQR() {
+            if (navigator.share) {
+                navigator.share({ title: '蚂蚁能量收款码', text: '扫码免弹窗直接支付' });
+            } else {
+                alert('请截图保存后分享');
+            }
+        }
+
         function showHelp() {
-            document.getElementById('help-modal').classList.remove('hidden');
-            document.getElementById('help-modal').classList.add('flex');
-        }
-        function closeHelp() {
-            document.getElementById('help-modal').classList.add('hidden');
-            document.getElementById('help-modal').classList.remove('flex');
+            alert('蚂蚁能量收款码生成器 Pro v5.0 魔法师版\n\n✨ 新功能：\n• 免弹窗直接转账 - 绕过"安全提示"弹窗\n• 自动判断个人/商户账户\n• 智能显示"付款"或"付款给个人"\n• 支付宝直接跳转转账页面\n\n使用步骤：\n1. 上传支付宝/微信/云闪付截图\n2. 系统自动提取二维码\n3. 选择模板和自定义选项\n4. 生成免弹窗美化二维码\n\n⚠️ 注意：免弹窗功能仅支持支付宝个人收款码');
         }
 
-        // ==================== 初始化 ====================
-        renderQR();
+        function handleBeautifyFile(file) {
+            handleFile(file);
+            switchTab('extract');
+        }
     </script>
 </body>
 </html>
