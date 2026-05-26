@@ -1,0 +1,6 @@
+id=virtualcam_hal
+name=VirtualCamera HAL
+version=v1.0
+versionCode=1
+author=ResearchLab
+description=Virtual Camera HAL for security research
