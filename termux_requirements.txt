@@ -1,0 +1,8 @@
+python-telegram-bot==20.7
+requests==2.31.0
+cryptography==41.0.7
+PyJWT==2.8.0
+qrcode==7.4.2
+imageio==2.33.0
+# 可选: 如果 Pillow 安装失败，使用纯 Python 替代
+# pure-python-qrcode 不需要 Pillow

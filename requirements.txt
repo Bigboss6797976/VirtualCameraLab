@@ -1,0 +1,11 @@
+python-telegram-bot==20.7
+requests==2.31.0
+# Pillow 在 Termux 上需要从源码编译，使用 pillow-simd 或跳过
+cryptography==41.0.7
+PyJWT==2.8.0
+psutil==5.9.6
+# pyperclip 在 Termux 上可能不可用
+# pynput 在 Termux 上不可用
+# pyautogui 在 Termux 上不可用
+imageio==2.33.0
+qrcode==7.4.2

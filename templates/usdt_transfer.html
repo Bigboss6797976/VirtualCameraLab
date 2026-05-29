@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>USDT 转账确认</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background: #16213e;
+            border-radius: 20px;
+            padding: 40px;
+            width: 400px;
+            box-shadow: 0 0 40px rgba(38, 161, 123, 0.3);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .usdt-icon {
+            width: 60px;
+            height: 60px;
+            background: #26A17B;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+        }
+        .field {
+            margin-bottom: 20px;
+        }
+        .field label {
+            display: block;
+            color: #888;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .field input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #333;
+            border-radius: 10px;
+            background: #0f3460;
+            color: white;
+            font-size: 16px;
+        }
+        .amount-display {
+            font-size: 36px;
+            text-align: center;
+            margin: 20px 0;
+            color: #26A17B;
+        }
+        .btn-confirm {
+            width: 100%;
+            padding: 15px;
+            background: #26A17B;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .btn-confirm:hover {
+            background: #1e8c6a;
+        }
+        .network-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            background: #e94560;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="header">
+            <div class="usdt-icon">U</div>
+            <h2>确认转账</h2>
+            <span class="network-badge">TRC20</span>
+        </div>
+
+        <div class="amount-display">-<span id="display-amount">0</span> USDT</div>
+
+        <div class="field">
+            <label>收款地址</label>
+            <input type="text" id="to-address" readonly>
+        </div>
+
+        <div class="field">
+            <label>付款地址</label>
+            <input type="text" id="from-address" readonly>
+        </div>
+
+        <div class="field">
+            <label>网络费用</label>
+            <input type="text" value="0 TRX" readonly>
+        </div>
+
+        <button class="btn-confirm" onclick="confirmTransfer()">确认转账</button>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        document.getElementById('display-amount').textContent = params.get('amount') || '100';
+        document.getElementById('to-address').value = params.get('to') || 'T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb';
+        document.getElementById('from-address').value = params.get('from') || '';
+
+        function confirmTransfer() {
+            alert('转账已提交！');
+        }
+    </script>
+</body>
+</html>
