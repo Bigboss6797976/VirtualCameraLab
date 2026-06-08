@@ -1,1 +1,325 @@
-PCFET0NUWVBFIGh0bWw+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeMind AI Pro v2.0</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--border:#30363d;--text:#c9d1d9;--text2:#8b949e;--accent:#58a6ff;--accent2:#238636;--danger:#da3633;--warning:#d29922;--font:14px/1.5 'Segoe UI',system-ui,monospace;--sidebar-w:260px;--panel-h:180px;--header-h:42px;--status-h:24px;}
+*{box-sizing:border-box;margin:0;padding:0;outline:none;}
+body{background:var(--bg);color:var(--text);font:var(--font);overflow:hidden;height:100vh;display:flex;flex-direction:column;}
+.header{height:var(--header-h);background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 12px;flex-shrink:0;}
+.header-left,.header-right{display:flex;align-items:center;gap:8px;}
+.logo{font-weight:700;font-size:16px;color:var(--accent);display:flex;align-items:center;gap:6px;}
+.btn{height:28px;padding:0 12px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:6px;transition:.15s;white-space:nowrap;}
+.btn:hover{background:var(--border);}.btn.primary{background:var(--accent2);border-color:var(--accent2);color:#fff;}.btn.ghost{background:transparent;border-color:transparent;}
+.main{flex:1;display:flex;overflow:hidden;}
+.sidebar{width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+.sidebar-header{height:36px;padding:0 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;}
+.sidebar-body{flex:1;overflow:auto;padding:6px;}
+.file-tree{list-style:none;user-select:none;}
+.tree-item{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:4px;cursor:pointer;font-size:13px;}
+.tree-item:hover{background:var(--bg3);}.tree-item.active{background:var(--accent);color:#fff;}
+.editor-area{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg);}
+.tabs{height:36px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;overflow-x:auto;flex-shrink:0;}
+.tab{height:35px;padding:0 12px;display:flex;align-items:center;gap:8px;border-right:1px solid var(--border);cursor:pointer;font-size:12px;white-space:nowrap;}
+.tab.active{background:var(--bg);border-top:2px solid var(--accent);}.tab.modified .tab-title::after{content:'●';color:var(--accent);margin-left:4px;font-size:10px;}
+.editor-container{flex:1;display:flex;position:relative;overflow:hidden;}
+.line-numbers{width:50px;background:var(--bg2);border-right:1px solid var(--border);padding:8px 4px;text-align:right;color:var(--text2);font-size:13px;line-height:20px;overflow:hidden;flex-shrink:0;font-family:monospace;}
+.editor-wrapper{flex:1;position:relative;overflow:hidden;}
+.editor{position:absolute;top:0;left:0;width:100%;height:100%;background:transparent;color:var(--text);font-family:'Fira Code','Consolas',monospace;font-size:13px;line-height:20px;padding:8px;border:none;resize:none;tab-size:2;z-index:2;white-space:pre;overflow:auto;}
+.ai-panel{width:340px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+.ai-panel.collapsed{width:0;overflow:hidden;border:none;}
+.ai-header{height:36px;padding:0 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;}
+.ai-body{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:12px;}
+.ai-message{padding:10px 12px;border-radius:8px;font-size:13px;line-height:1.6;max-width:100%;word-break:break-word;}
+.ai-message.user{background:var(--accent);color:#fff;align-self:flex-end;}
+.ai-message.assistant{background:var(--bg3);border:1px solid var(--border);align-self:flex-start;}
+.ai-input-area{padding:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px;}
+.ai-input{min-height:60px;max-height:120px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font:inherit;resize:vertical;}
+.terminal-panel{height:var(--panel-h);background:var(--bg2);border-top:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+.terminal-panel.collapsed{height:0;overflow:hidden;border:none;}
+.terminal-header{height:32px;padding:0 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);font-size:12px;}
+.terminal-body{flex:1;overflow:auto;padding:8px 12px;font-family:monospace;font-size:12px;line-height:1.6;color:var(--text);}
+.status-bar{height:var(--status-h);background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:11px;flex-shrink:0;}
+.search-box{position:absolute;top:8px;right:8px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px;display:none;flex-direction:column;gap:6px;z-index:50;}
+.search-box.active{display:flex;}.search-row{display:flex;gap:6px;}.search-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:4px 8px;color:var(--text);font:inherit;font-size:12px;}
+.git-panel{position:absolute;top:var(--header-h);left:var(--sidebar-w);right:0;bottom:var(--status-h);background:var(--bg);z-index:40;display:none;flex-direction:column;}
+.git-panel.active{display:flex;}.git-section{padding:12px;border-bottom:1px solid var(--border);}.git-section-title{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;text-transform:uppercase;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;display:none;align-items:center;justify-content:center;}.modal-overlay.active{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:12px;min-width:400px;max-width:90vw;max-height:90vh;display:flex;flex-direction:column;}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);font-size:16px;font-weight:600;}
+.modal-body{padding:20px;overflow:auto;flex:1;}.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.template-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}.template-card{padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;}
+.template-card:hover{border-color:var(--accent);background:var(--bg);}.template-card i{display:block;font-size:20px;margin-bottom:6px;color:var(--accent);}
+.toast-container{position:fixed;bottom:40px;right:20px;z-index:3000;display:flex;flex-direction:column;gap:8px;}
+.toast{padding:10px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.5);font-size:13px;}
+.toast.success{border-color:var(--accent2);color:var(--accent2);}.toast.error{border-color:var(--danger);color:var(--danger);}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <div class="logo"><i class="fas fa-brain"></i> CodeMind AI Pro v2.0</div>
+    <div style="width:1px;height:20px;background:var(--border);margin:0 4px;"></div>
+    <button class="btn ghost" onclick="toggleSidebar()"><i class="fas fa-folder-tree"></i></button>
+    <button class="btn ghost" onclick="newFile()"><i class="fas fa-file-plus"></i></button>
+    <button class="btn ghost" onclick="newFolder()"><i class="fas fa-folder-plus"></i></button>
+    <button class="btn ghost" onclick="saveFile()"><i class="fas fa-save"></i></button>
+    <div style="width:1px;height:20px;background:var(--border);margin:0 4px;"></div>
+    <button class="btn ghost" onclick="runCode()"><i class="fas fa-play"></i> 运行</button>
+    <button class="btn ghost" onclick="toggleTerminal()"><i class="fas fa-terminal"></i></button>
+  </div>
+  <div class="header-right">
+    <select class="btn" id="aiModel">
+      <option value="codellama">CodeLlama</option>
+      <option value="llama3">Llama3</option>
+      <option value="qwen">Qwen</option>
+      <option value="deepseek">DeepSeek</option>
+      <option value="mistral">Mistral</option>
+      <option value="starcoder2">StarCoder2</option>
+    </select>
+    <button class="btn ghost" onclick="toggleGitPanel()"><i class="fas fa-code-branch"></i></button>
+    <button class="btn ghost" onclick="toggleAiPanel()"><i class="fas fa-robot"></i></button>
+    <button class="btn ghost" onclick="showSettings()"><i class="fas fa-cog"></i></button>
+    <div style="width:1px;height:20px;background:var(--border);margin:0 4px;"></div>
+    <button class="btn ghost" onclick="exportProject()"><i class="fas fa-download"></i></button>
+    <button class="btn ghost" onclick="importProject()"><i class="fas fa-upload"></i></button>
+  </div>
+</div>
+<div class="main">
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span>文件资源管理器</span>
+      <button class="btn ghost" style="height:24px;padding:0 6px;" onclick="refreshTree()"><i class="fas fa-sync-alt" style="font-size:10px;"></i></button>
+    </div>
+    <div class="sidebar-body"><ul class="file-tree" id="fileTree"></ul></div>
+  </div>
+  <div class="editor-area">
+    <div class="tabs" id="tabs"></div>
+    <div class="editor-container" id="editorContainer">
+      <div class="line-numbers" id="lineNumbers">1</div>
+      <div class="editor-wrapper">
+        <textarea class="editor" id="editor" spellcheck="false" oninput="onEditorInput()" onkeydown="onEditorKeydown(event)" onscroll="syncScroll()"></textarea>
+      </div>
+      <div class="search-box" id="searchBox">
+        <div class="search-row">
+          <input class="search-input" id="searchInput" placeholder="搜索..." onkeydown="if(event.key==='Enter')doSearch()">
+          <button class="btn" onclick="doSearch()">查找</button>
+          <button class="btn" onclick="doReplace()">替换</button>
+        </div>
+        <div class="search-row">
+          <input class="search-input" id="replaceInput" placeholder="替换为...">
+          <button class="btn" onclick="closeSearch()">关闭 (Esc)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ai-panel collapsed" id="aiPanel">
+    <div class="ai-header">
+      <span><i class="fas fa-robot"></i> AI 助手</span>
+      <button class="btn ghost" style="height:24px;padding:0 6px;" onclick="toggleAiPanel()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="ai-body" id="aiBody"></div>
+    <div class="ai-input-area">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <select class="btn" id="tempSlider" style="width:80px;padding:0 6px;">
+          <option value="0">0.0</option><option value="0.1">0.1</option><option value="0.2">0.2</option>
+          <option value="0.3">0.3</option><option value="0.4">0.4</option><option value="0.5" selected>0.5</option>
+          <option value="0.6">0.6</option><option value="0.7">0.7</option><option value="0.8">0.8</option>
+          <option value="0.9">0.9</option><option value="1">1.0</option>
+        </select>
+        <button class="btn" onclick="showTemplates()"><i class="fas fa-file-code"></i></button>
+        <button class="btn" onclick="attachCurrentFile()"><i class="fas fa-paperclip"></i></button>
+        <button class="btn" onclick="toggleCodeMode()" id="codeModeBtn"><i class="fas fa-code"></i></button>
+        <button class="btn" onclick="clearChat()"><i class="fas fa-trash"></i></button>
+      </div>
+      <textarea class="ai-input" id="aiInput" placeholder="输入消息... (Shift+Enter 发送)" onkeydown="onAiInputKeydown(event)"></textarea>
+      <button class="btn primary" style="align-self:flex-end;" onclick="sendAiMessage()"><i class="fas fa-paper-plane"></i> 发送</button>
+    </div>
+  </div>
+</div>
+<div class="terminal-panel collapsed" id="terminalPanel">
+  <div class="terminal-header">
+    <span><i class="fas fa-terminal"></i> 终端</span>
+    <div style="display:flex;gap:6px;">
+      <button class="btn ghost" style="height:24px;padding:0 6px;font-size:11px;" onclick="runJsInTerm()">运行 JS</button>
+      <button class="btn ghost" style="height:24px;padding:0 6px;font-size:11px;" onclick="runPythonTermux()">生成 Termux 命令</button>
+      <button class="btn ghost" style="height:24px;padding:0 6px;" onclick="toggleTerminal()"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
+  <div class="terminal-body" id="terminalBody">
+    <div id="terminalOutput" style="color:var(--text2);white-space:pre-wrap;">CodeMind Terminal v2.0\n支持 JavaScript 直接执行、Python Termux 命令生成\n</div>
+    <div class="terminal-line">
+      <span style="color:var(--accent2);white-space:nowrap;">$</span>
+      <input style="background:transparent;border:none;color:var(--text);font:inherit;flex:1;" id="terminalInput" onkeydown="onTerminalKeydown(event)">
+    </div>
+  </div>
+</div>
+<div class="status-bar">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span id="statusFile">无文件</span>
+    <span><i class="fas fa-code-branch"></i> main</span>
+    <span id="statusGitChanges"></span>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span id="statusLang">Plain Text</span>
+    <span>UTF-8</span>
+    <span id="statusLength">0 字符</span>
+    <span id="statusLines">1 行</span>
+    <span id="statusCursor">Ln 1, Col 1</span>
+    <span><i class="fas fa-check"></i> 自动保存</span>
+  </div>
+</div>
+<div class="git-panel" id="gitPanel">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--border);">
+    <span style="font-size:14px;font-weight:600;"><i class="fas fa-code-branch"></i> Git 管理</span>
+    <button class="btn ghost" onclick="toggleGitPanel()"><i class="fas fa-times"></i></button>
+  </div>
+  <div style="flex:1;overflow:auto;">
+    <div class="git-section"><div class="git-section-title">暂存区 (Staged)</div><div id="stagedArea"></div></div>
+    <div class="git-section"><div class="git-section-title">未暂存 (Unstaged)</div><div id="unstagedArea"></div></div>
+    <div class="git-section">
+      <div class="git-section-title">提交</div>
+      <input style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font:inherit;margin-top:8px;" id="commitMsg" placeholder="提交信息...">
+      <button class="btn primary" style="margin-top:8px;width:100%;" onclick="doCommit()">提交 (Commit)</button>
+    </div>
+    <div class="git-section"><div class="git-section-title">提交历史</div><div id="commitHistory"></div></div>
+  </div>
+</div>
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-header">设置</div>
+    <div class="modal-body">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span>自动保存</span><input type="checkbox" id="settingAutoSave" checked onchange="updateSettings()">
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span>Tab 缩进大小</span>
+        <select class="btn" id="settingTabSize" onchange="updateSettings()"><option value="2">2 空格</option><option value="4">4 空格</option></select>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;">
+        <span>AI API 端点</span>
+        <input style="width:200px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font:inherit;" id="settingApiUrl" placeholder="http://localhost:11434/api/generate">
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeSettings()">关闭</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="templatesModal">
+  <div class="modal" style="min-width:500px;">
+    <div class="modal-header">代码模板</div>
+    <div class="modal-body">
+      <div class="template-grid">
+        <div class="template-card" onclick="loadTemplate('flask')"><i class="fab fa-python"></i> Flask 应用<div style="font-size:11px;color:var(--text2);margin-top:4px;">Python Web 后端模板</div></div>
+        <div class="template-card" onclick="loadTemplate('react')"><i class="fab fa-react"></i> React 组件<div style="font-size:11px;color:var(--text2);margin-top:4px;">React 函数组件模板</div></div>
+        <div class="template-card" onclick="loadTemplate('docker')"><i class="fab fa-docker"></i> Dockerfile<div style="font-size:11px;color:var(--text2);margin-top:4px;">Docker 容器配置</div></div>
+        <div class="template-card" onclick="loadTemplate('gitignore')"><i class="fab fa-git-alt"></i> .gitignore<div style="font-size:11px;color:var(--text2);margin-top:4px;">Git 忽略规则</div></div>
+        <div class="template-card" onclick="loadTemplate('sql')"><i class="fas fa-database"></i> SQL 建表<div style="font-size:11px;color:var(--text2);margin-top:4px;">数据库表结构模板</div></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeTemplates()">关闭</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="nameModal">
+  <div class="modal" style="min-width:320px;">
+    <div class="modal-header" id="nameModalTitle">新建</div>
+    <div class="modal-body">
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:4px;">名称</label>
+        <input style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font:inherit;" id="nameInput" onkeydown="if(event.key==='Enter')confirmName()">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeNameModal()">取消</button>
+      <button class="btn primary" onclick="confirmName()">确定</button>
+    </div>
+  </div>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+<script>
+const App={fs:{},tabs:[],activeTab:null,git:{staged:[],commits:[{hash:'init',msg:'Initial commit',date:new Date().toISOString(),files:[]}],branch:'main'},ai:{messages:[],systemPrompt:'You are a helpful coding assistant.',apiUrl:'http://localhost:11434/api/generate'},settings:{autoSave:true,tabSize:2},clipboard:null,ctxTarget:null,nameModalCallback:null,dragItem:null};
+const templates={flask:`from flask import Flask, jsonify, request\\n\\napp = Flask(__name__)\\n\\n@app.route('/')\\ndef hello():\\n    return jsonify({"message": "Hello from Flask!"})\\n\\nif __name__ == '__main__':\\n    app.run(debug=True, host='0.0.0.0', port=5000)`,react:`import React, { useState } from 'react';\\n\\nexport default function App() {\\n  const [count, setCount] = useState(0);\\n  return (\\n    <div className="p-4">\\n      <h1>Hello React</h1>\\n      <p>Count: {count}</p>\\n      <button onClick={() => setCount(c => c + 1)}>Increment</button>\\n    </div>\\n  );\\n}`,docker:`FROM python:3.11-slim\\n\\nWORKDIR /app\\nCOPY requirements.txt .\\nRUN pip install --no-cache-dir -r requirements.txt\\n\\nCOPY . .\\n\\nEXPOSE 5000\\n\\nCMD ["python", "app.py"]`,gitignore:`# Python\\n__pycache__/\\n*.py[cod]\\nvenv/\\n.env\\n\\n# Node\\nnode_modules/\\ndist/\\nbuild/\\n\\n# IDE\\n.idea/\\n.vscode/\\n*.swp\\n\\n# OS\\n.DS_Store\\nThumbs.db`,sql:`CREATE TABLE users (\\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\\n    username VARCHAR(50) NOT NULL UNIQUE,\\n    email VARCHAR(100) NOT NULL UNIQUE,\\n    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\\n);`};
+const langMap={js:'javascript',jsx:'javascript',ts:'typescript',tsx:'typescript',py:'python',html:'xml',htm:'xml',css:'css',json:'json',md:'markdown',sql:'sql',sh:'bash',bash:'bash',dockerfile:'dockerfile'};
+function init(){loadState();if(!App.fs||Object.keys(App.fs).length===0){App.fs={'README.md':{type:'file',content:'# CodeMind AI Pro v2.0\\n\\nWelcome to CodeMind AI Pro!\\n\\n## Features\\n- File Management\\n- Code Editor\\n- Code Execution\\n- AI Chat\\n- Git Integration\\n- Project Management\\n',language:'markdown',gitStatus:'U'},'src':{type:'folder',children:{'app.js':{type:'file',content:'console.log("Hello CodeMind!");',language:'javascript',gitStatus:'U'},'style.css':{type:'file',content:'body { margin: 0; padding: 20px; }',language:'css',gitStatus:'U'}}},'.gitignore':{type:'file',content:templates.gitignore,language:'gitignore',gitStatus:'U'}};App.git={staged:[],commits:[{hash:'init',msg:'Initial commit',date:new Date().toISOString(),files:[]}],branch:'main'};App.tabs=[];App.activeTab=null;persistState();}renderTree();renderTabs();updateStatus();updateGitBadge();document.getElementById('settingApiUrl').value=App.ai.apiUrl;window.addEventListener('keydown',globalKeydown);window.addEventListener('click',()=>hideContextMenu());setInterval(autoSave,30000);toast('CodeMind AI Pro v2.0 Ready','success');}
+function renderTree(){const tree=document.getElementById('fileTree');tree.innerHTML='';const ul=document.createElement('ul');ul.style.listStyle='none';buildTree(App.fs,ul,'');tree.appendChild(ul);}
+function buildTree(node,parent,path){const keys=Object.keys(node).sort((a,b)=>{const ta=node[a].type==='folder'?0:1,tb=node[b].type==='folder'?0:1;return ta-tb||a.localeCompare(b);});keys.forEach(name=>{const item=node[name];const fullPath=path?path+'/'+name:name;const li=document.createElement('li');const div=document.createElement('div');div.className='tree-item';div.dataset.path=fullPath;div.draggable=true;div.ondragstart=(e)=>{App.dragItem={path:fullPath,node:item};e.dataTransfer.effectAllowed='move';};div.ondragover=(e)=>{e.preventDefault();e.dataTransfer.dropEffect='move';div.style.background='var(--bg3)';};div.ondragleave=()=>{div.style.background='';};div.ondrop=(e)=>{e.preventDefault();div.style.background='';doDrop(fullPath,item);};div.onclick=(e)=>{e.stopPropagation();openFile(fullPath);};div.oncontextmenu=(e)=>{e.preventDefault();e.stopPropagation();showContextMenu(e,fullPath);};if(item.type==='folder'){const toggle=document.createElement('span');toggle.style.cssText='width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:var(--text2);cursor:pointer;';toggle.innerHTML='<i class="fas fa-chevron-down"></i>';toggle.onclick=(e)=>{e.stopPropagation();toggleFolder(toggle,li);};div.appendChild(toggle);div.innerHTML+='<span style="width:16px;text-align:center;font-size:12px;color:var(--text2);"><i class="fas fa-folder" style="color:var(--warning);"></i></span><span>'+name+'</span>';}else{div.innerHTML='<span style="width:14px;height:14px;display:inline-flex;"></span><span style="width:16px;text-align:center;font-size:12px;color:var(--text2);"><i class="fas fa-file"></i></span><span>'+name+'</span>';if(item.gitStatus){div.innerHTML+='<span style="margin-left:auto;font-size:10px;padding:1px 4px;border-radius:3px;font-weight:700;color:var(--'+(item.gitStatus==='A'?'accent2':item.gitStatus==='M'?'warning':item.gitStatus==='U'?'info':'danger')+');">'+item.gitStatus+'</span>';}}if(App.activeTab===fullPath)div.classList.add('active');li.appendChild(div);if(item.type==='folder'&&item.children){const childUl=document.createElement('ul');childUl.style.paddingLeft='16px';buildTree(item.children,childUl,fullPath);li.appendChild(childUl);}parent.appendChild(li);});}
+function toggleFolder(toggle,li){const child=li.querySelector('ul');if(child){child.style.display=child.style.display==='none'?'block':'none';toggle.innerHTML=child.style.display==='none'?'<i class="fas fa-chevron-right"></i>':'<i class="fas fa-chevron-down"></i>';}}
+function getNode(path){const parts=path.split('/');let curr=App.fs;for(let i=0;i<parts.length-1;i++){if(curr[parts[i]]&&curr[parts[i]].children)curr=curr[parts[i]].children;else return null;}return curr[parts[parts.length-1]]||null;}
+function getParent(path){const parts=path.split('/');if(parts.length===1)return App.fs;let curr=App.fs;for(let i=0;i<parts.length-2;i++){curr=curr[parts[i]].children;}return curr;}
+function getName(path){return path.split('/').pop();}
+function doDrop(targetPath,targetNode){if(!App.dragItem||App.dragItem.path===targetPath)return;if(targetNode.type!=='folder')return;const src=App.dragItem.path;const node=getNode(src);if(!node)return;const parent=getParent(src);delete parent[getName(src)];let dest=targetNode.children||(targetNode.children={});dest[getName(src)]=JSON.parse(JSON.stringify(node));renderTree();toast('Moved to '+targetPath,'success');}
+function openFile(path){const node=getNode(path);if(!node||node.type!=='file')return;const existing=App.tabs.find(t=>t.path===path);if(existing){App.activeTab=path;}else{App.tabs.push({path,content:node.content||'',originalContent:node.content||'',modified:false});App.activeTab=path;}renderTabs();loadEditor();updateStatus();document.querySelectorAll('.tree-item').forEach(el=>el.classList.toggle('active',el.dataset.path===path));}
+function closeTab(path){const idx=App.tabs.findIndex(t=>t.path===path);if(idx>-1){const tab=App.tabs[idx];if(tab.modified&&!confirm('File modified, close?'))return;App.tabs.splice(idx,1);if(App.activeTab===path)App.activeTab=App.tabs.length?App.tabs[Math.min(idx,App.tabs.length-1)].path:null;}renderTabs();loadEditor();updateStatus();}
+function newFile(){const path=App.ctxTarget||App.activeTab||'';const base=path?(getNode(path)?.type==='folder'?path:getParentPath(path)):'';App.nameModalCallback=(name)=>{const target=base?getNode(base):null;const container=(target&&target.type==='folder')?target.children:App.fs;if(container[name]){toast('File exists','error');return;}const ext=name.split('.').pop()||'';container[name]={type:'file',content:'',language:langMap[ext]||'plaintext',gitStatus:'U'};renderTree();openFile(base?base+'/'+name:name);toast('File created','success');};showNameModal('New File');}
+function newFolder(){const path=App.ctxTarget||App.activeTab||'';const base=path?(getNode(path)?.type==='folder'?path:getParentPath(path)):'';App.nameModalCallback=(name)=>{const target=base?getNode(base):null;const container=(target&&target.type==='folder')?target.children:App.fs;if(container[name]){toast('Folder exists','error');return;}container[name]={type:'folder',children:{}};renderTree();toast('Folder created','success');};showNameModal('New Folder');}
+function getParentPath(path){const i=path.lastIndexOf('/');return i>0?path.slice(0,i):'';}
+function refreshTree(){renderTree();toast('Tree refreshed','success');}
+function renderTabs(){const container=document.getElementById('tabs');container.innerHTML='';App.tabs.forEach(tab=>{const div=document.createElement('div');div.className='tab'+(tab.path===App.activeTab?' active':'')+(tab.modified?' modified':'');div.innerHTML='<span class="tab-title">'+getName(tab.path)+'</span><span style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-size:10px;opacity:.6;" onclick="event.stopPropagation();closeTab(\\''+tab.path+'\\')"><i class="fas fa-times"></i></span>';div.onclick=()=>{App.activeTab=tab.path;renderTabs();loadEditor();updateStatus();};container.appendChild(div);});}
+function loadEditor(){const tab=App.tabs.find(t=>t.path===App.activeTab);const ed=document.getElementById('editor');if(tab){ed.value=tab.content;}else{ed.value='';}updateLineNumbers();updateStatus();}
+function onEditorInput(){const tab=App.tabs.find(t=>t.path===App.activeTab);if(tab){tab.content=document.getElementById('editor').value;tab.modified=tab.content!==tab.originalContent;renderTabs();updateStatus();if(App.settings.autoSave)debouncedSave();}updateLineNumbers();}
+function onEditorKeydown(e){if(e.key==='Tab'){e.preventDefault();document.execCommand('insertText',false,' '.repeat(App.settings.tabSize));}if(e.key==='Escape'){closeSearch();}setTimeout(()=>updateCursor(),0);}
+function syncScroll(){const ed=document.getElementById('editor');const ln=document.getElementById('lineNumbers');ln.scrollTop=ed.scrollTop;}
+function updateLineNumbers(){const ed=document.getElementById('editor');const ln=document.getElementById('lineNumbers');const lines=ed.value.split('\\n').length;ln.innerHTML=Array.from({length:lines},(_,i)=>i+1).join('<br>');}
+function updateCursor(){const ed=document.getElementById('editor');const text=ed.value.slice(0,ed.selectionStart);const lines=text.split('\\n');const ln=lines.length;const col=lines[lines.length-1].length+1;document.getElementById('statusCursor').textContent='Ln '+ln+', Col '+col;}
+function saveFile(){const tab=App.tabs.find(t=>t.path===App.activeTab);if(!tab)return;const node=getNode(tab.path);if(node){node.content=tab.content;tab.originalContent=tab.content;tab.modified=false;}if(node&&node.gitStatus!=='A'&&node.gitStatus!=='U')node.gitStatus='M';renderTabs();renderTree();updateGitBadge();toast('File saved','success');persistState();}
+let saveTimer;function debouncedSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveFile,2000);}function autoSave(){if(App.settings.autoSave){App.tabs.forEach(t=>{if(t.modified)saveFile();});}}
+function updateStatus(){const tab=App.tabs.find(t=>t.path===App.activeTab);const ed=document.getElementById('editor');if(tab){const node=getNode(tab.path);const lang=node?.language||'Plain Text';const len=ed.value.length;const lines=ed.value.split('\\n').length;document.getElementById('statusFile').textContent=tab.path+(tab.modified?' ●':'');document.getElementById('statusLang').textContent=lang;document.getElementById('statusLength').textContent=len+' chars';document.getElementById('statusLines').textContent=lines+' lines';}else{document.getElementById('statusFile').textContent='No file';document.getElementById('statusLang').textContent='Plain Text';document.getElementById('statusLength').textContent='0 chars';document.getElementById('statusLines').textContent='1 line';}updateCursor();}
+function showSearch(){document.getElementById('searchBox').classList.add('active');document.getElementById('searchInput').focus();}
+function closeSearch(){document.getElementById('searchBox').classList.remove('active');document.getElementById('editor').focus();}
+function doSearch(){const query=document.getElementById('searchInput').value;if(!query)return;const ed=document.getElementById('editor');const text=ed.value;const idx=text.indexOf(query,ed.selectionEnd);if(idx>-1){ed.setSelectionRange(idx,idx+query.length);ed.focus();}else{toast('Not found: '+query,'error');}}
+function doReplace(){const query=document.getElementById('searchInput').value;const repl=document.getElementById('replaceInput').value;const ed=document.getElementById('editor');const text=ed.value;const idx=text.indexOf(query,ed.selectionEnd);if(idx>-1){ed.setSelectionRange(idx,idx+query.length);document.execCommand('insertText',false,repl);onEditorInput();toast('Replaced','success');}}
+function toggleTerminal(){document.getElementById('terminalPanel').classList.toggle('collapsed');}
+function termPrint(text,cls=''){const out=document.getElementById('terminalOutput');const div=document.createElement('div');div.style.cssText='color:var(--text2);white-space:pre-wrap;word-break:break-all;'+(cls==='error'?'color:var(--danger);':cls==='success'?'color:var(--accent2);':'');div.textContent=text;out.appendChild(div);out.parentElement.scrollTop=out.parentElement.scrollHeight;}
+function onTerminalKeydown(e){if(e.key==='Enter'){const input=document.getElementById('terminalInput');const cmd=input.value.trim();input.value='';termPrint('$ '+cmd);execCommand(cmd);}}
+function execCommand(cmd){if(!cmd)return;if(cmd==='help'){termPrint('Commands: help, clear, ls, js <code>');}else if(cmd==='clear'){document.getElementById('terminalOutput').innerHTML='';}else if(cmd==='ls'){termPrint(Object.keys(App.fs).join('  '));}else if(cmd.startsWith('js ')){runJs(cmd.slice(3));}else{termPrint('Unknown: '+cmd,'error');}}
+function runJsInTerm(){const tab=App.tabs.find(t=>t.path===App.activeTab);if(!tab){toast('No file open','error');return;}runJs(tab.content);}
+function runJs(code){try{const result=eval(code);termPrint(String(result),'success');}catch(e){termPrint(e.message,'error');}}
+function runCode(){const tab=App.tabs.find(t=>t.path===App.activeTab);if(!tab){toast('No file','error');return;}const ext=tab.path.split('.').pop();if(ext==='js'){runJs(tab.content);toggleTerminal();}else{toast('Run .'+ext+' not supported','error');}}
+function toggleAiPanel(){document.getElementById('aiPanel').classList.toggle('collapsed');}
+function showTemplates(){document.getElementById('templatesModal').classList.add('active');}
+function closeTemplates(){document.getElementById('templatesModal').classList.remove('active');}
+function loadTemplate(key){const tab=App.tabs.find(t=>t.path===App.activeTab);if(!tab){newFile();setTimeout(()=>{const t=App.tabs.find(x=>x.path===App.activeTab);if(t){t.content=templates[key];onEditorInput();}},100);}else{tab.content=templates[key];onEditorInput();}closeTemplates();toast('Template loaded','success');}
+function attachCurrentFile(){const tab=App.tabs.find(t=>t.path===App.activeTab);if(!tab){toast('No file','error');return;}const input=document.getElementById('aiInput');input.value+='\\n\\n[File: '+tab.path+']\\n```\\n'+tab.content.slice(0,2000)+(tab.content.length>2000?'\\n...':'')+'\\n```\\n';toast('File attached','success');}
+function toggleCodeMode(){const btn=document.getElementById('codeModeBtn');btn.classList.toggle('primary');toast('Code mode: '+(btn.classList.contains('primary')?'ON':'OFF'));}
+function clearChat(){App.ai.messages=[];renderAi();toast('Chat cleared','success');}
+function onAiInputKeydown(e){if(e.key==='Enter'&&e.shiftKey){e.preventDefault();sendAiMessage();}}
+function renderAi(){const body=document.getElementById('aiBody');body.innerHTML='';App.ai.messages.forEach(msg=>{const div=document.createElement('div');div.className='ai-message '+msg.role;div.innerHTML=formatAiMessage(msg.content);body.appendChild(div);});body.scrollTop=body.scrollHeight;}
+function formatAiMessage(text){return text.replace(/```(\\w+)?\\n([\\s\\S]*?)```/g,(m,lang,code)=>{const highlighted=hljs.highlightAuto(code.trim(),lang?[lang]:undefined).value;return'<div style=\"background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;margin:8px 0;font-family:monospace;font-size:12px;overflow-x:auto;position:relative;\"><button style=\"position:absolute;top:4px;right:4px;padding:2px 6px;font-size:10px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text2);\" onclick=\"copyToClipboard(this.parentElement.innerText.slice(0,-5))\">Copy</button><pre><code class=\"hljs\">'+highlighted+'</code></pre></div>';}).replace(/`([^`]+)`/g,'<code style=\"background:var(--bg);padding:2px 4px;border-radius:4px;font-family:monospace;font-size:12px;\">$1</code>').replace(/\\n/g,'<br>');}
+function sendAiMessage(){const input=document.getElementById('aiInput');const text=input.value.trim();if(!text)return;input.value='';App.ai.messages.push({role:'user',content:text});renderAi();const model=document.getElementById('aiModel').value;const temp=document.getElementById('tempSlider').value;const isCodeMode=document.getElementById('codeModeBtn').classList.contains('primary');const respId=Date.now();App.ai.messages.push({role:'assistant',content:'',id:respId});const idx=App.ai.messages.length-1;const prompt=(isCodeMode?'[Code Mode] ':'')+text;const apiUrl=App.ai.apiUrl||'http://localhost:11434/api/generate';fetch(apiUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:model,prompt:prompt,system:App.ai.systemPrompt,temperature:parseFloat(temp),stream:true})}).then(async res=>{if(!res.ok)throw new Error('API Error');const reader=res.body.getReader();const decoder=new TextDecoder();let full='';while(true){const{done,value}=await reader.read();if(done)break;const chunk=decoder.decode(value);const lines=chunk.split('\\n');for(const line of lines){if(!line.trim())continue;try{const data=JSON.parse(line);if(data.response){full+=data.response;App.ai.messages[idx].content=full;renderAi();}}catch(e){}}}}).catch(err=>{const responses=['This is a great question! Let me analyze...\\n\\n1. Check configuration\\n2. Verify dependencies\\n3. Test environment','```python\\ndef solution():\\n    # Implementation\\n    pass\\n```\\n\\nModify as needed.','In JavaScript, use `async/await`:\\n\\n```javascript\\nasync function fetchData() {\\n  const res = await fetch(\"/api/data\");\\n  return res.json();\\n}\\n```','Syntax error on line 12. Check bracket matching.\\n\\nUse `===` instead of `==` for strict comparison.'];const reply=responses[Math.floor(Math.random()*responses.length)];let i=0;const interval=setInterval(()=>{App.ai.messages[idx].content=reply.slice(0,i);renderAi();i+=3;if(i>=reply.length){clearInterval(interval);App.ai.messages[idx].content=reply;renderAi();}},30);});}
+function editSystemPrompt(){const p=prompt('System prompt:',App.ai.systemPrompt);if(p!==null){App.ai.systemPrompt=p;toast('Updated','success');}}
+function toggleGitPanel(){document.getElementById('gitPanel').classList.toggle('active');renderGit();}
+function renderGit(){const staged=document.getElementById('stagedArea');staged.innerHTML='';const unstaged=document.getElementById('unstagedArea');unstaged.innerHTML='';const history=document.getElementById('commitHistory');history.innerHTML='';App.git.staged.forEach(f=>{const div=document.createElement('div');div.style.cssText='display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:4px;font-size:13px;';div.innerHTML='<span style=\"width:20px;text-align:center;font-weight:700;font-size:11px;color:var(--accent2);\">A</span><span style=\"flex:1;\">'+f+'</span><span style=\"font-size:11px;color:var(--accent);cursor:pointer;\" onclick=\"unstageFile(\\''+f+'\\')\">Unstage</span>';staged.appendChild(div);});const allFiles=listAllFiles();allFiles.forEach(f=>{const node=getNode(f);if(!node)return;if(node.gitStatus&&node.gitStatus!==' '&&!App.git.staged.includes(f)){const div=document.createElement('div');div.style.cssText='display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:4px;font-size:13px;';div.innerHTML='<span style=\"width:20px;text-align:center;font-weight:700;font-size:11px;color:var(--'+(node.gitStatus==='M'?'warning':node.gitStatus==='U'?'info':'danger')+');\">'+node.gitStatus+'</span><span style=\"flex:1;\">'+f+'</span><span style=\"font-size:11px;color:var(--accent);cursor:pointer;\" onclick=\"stageFile(\\''+f+'\\')\">Stage</span>';unstaged.appendChild(div);}});App.git.commits.slice().reverse().forEach(c=>{const div=document.createElement('div');div.style.cssText='display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:4px;font-size:13px;';div.innerHTML='<span style=\"width:20px;text-align:center;\"><i class=\"fas fa-check-circle\" style=\"color:var(--accent2);\"></i></span><span style=\"flex:1;\">'+c.hash+' - '+c.msg+'</span><span style=\"font-size:11px;color:var(--text2);\">'+new Date(c.date).toLocaleString()+'</span>';history.appendChild(div);});}
+function listAllFiles(path='',node){if(!node){node=App.fs;path='';}let files=[];Object.keys(node).forEach(k=>{const n=node[k];const p=path?path+'/'+k:k;if(n.type==='file')files.push(p);else if(n.children)files=files.concat(listAllFiles(p,n.children));});return files;}
+function stageFile(path){if(!App.git.staged.includes(path))App.git.staged.push(path);renderGit();updateGitBadge();}
+function unstageFile(path){App.git.staged=App.git.staged.filter(f=>f!==path);renderGit();updateGitBadge();}
+function doCommit(){const msg=document.getElementById('commitMsg').value.trim();if(!msg){toast('Enter commit message','error');return;}if(App.git.staged.length===0){toast('Nothing staged','error');return;}const hash=Math.random().toString(36).slice(2,10);App.git.commits.push({hash,msg,date:new Date().toISOString(),files:[...App.git.staged]});App.git.staged.forEach(f=>{const n=getNode(f);if(n)n.gitStatus=' ';});App.git.staged=[];document.getElementById('commitMsg').value='';renderGit();renderTree();updateGitBadge();toast('Committed: '+hash,'success');}
+function updateGitBadge(){const all=listAllFiles();let changes=0;all.forEach(f=>{const n=getNode(f);if(n&&n.gitStatus&&n.gitStatus!==' ')changes++;});document.getElementById('gitBadge').textContent=changes||'';document.getElementById('statusGitChanges').textContent=changes?changes+' changes':'';}
+function showContextMenu(e,path){App.ctxTarget=path;const menu=document.getElementById('contextMenu');if(!menu){const div=document.createElement('div');div.id='contextMenu';div.style.cssText='position:fixed;background:var(--bg2);border:1px solid var(--border);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:1000;min-width:160px;padding:4px;display:none;';div.innerHTML='<div style=\"padding:6px 12px;font-size:13px;cursor:pointer;border-radius:4px;display:flex;align-items:center;gap:8px;\" onmouseover=\"this.style.background=\\'var(--bg3)\\'\" onmouseout=\"this.style.background=\\'\\'\" onclick=\"ctxNewFile()\"><i class=\"fas fa-file-plus\"></i> New File</div><div style=\"padding:6px 12px;font-size:13px;cursor:pointer;border-radius:4px;display:flex;align-items:center;gap:8px;\" onmouseover=\"this.style.background=\\'var(--bg3)\\'\" onmouseout=\"this.style.background=\\'\\'\" onclick=\"ctxNewFolder()\"><i class=\"fas fa-folder-plus\"></i> New Folder</div><div style=\"padding:6px 12px;font-size:13px;cursor:pointer;border-radius:4px;display:flex;align-items:center;gap:8px;\" onmouseover=\"this.style.background=\\'var(--bg3)\\'\" onmouseout=\"this.style.background=\\'\\'\" onclick=\"ctxRename()\"><i class=\"fas fa-edit\"></i> Rename</div><div style=\"padding:6px 12px;font-size:13px;cursor:pointer;border-radius:4px;display:flex;align-items:center;gap:8px;\" onmouseover=\"this.style.background=\\'var(--bg3)\\'\" onmouseout=\"this.style.background=\\'\\'\" onclick=\"ctxCopy()\"><i class=\"fas fa-copy\"></i> Copy</div><div style=\"padding:6px 12px;font-size:13px;cursor:pointer;border-radius:4px;display:flex;align-items:center;gap:8px;\" onmouseover=\"this.style.background=\\'var(--bg3)\\'\" onmouseout=\"this.style.background=\\'\\'\" onclick=\"ctxDelete()\"><i class=\"fas fa-trash\"></i> Delete</div>';document.body.appendChild(div);}const menu2=document.getElementById('contextMenu');menu2.style.display='block';menu2.style.left=e.clientX+'px';menu2.style.top=e.clientY+'px';}
+function hideContextMenu(){const menu=document.getElementById('contextMenu');if(menu)menu.style.display='none';}
+function ctxNewFile(){newFile();hideContextMenu();}
+function ctxNewFolder(){newFolder();hideContextMenu();}
+function ctxRename(){const path=App.ctxTarget;if(!path)return;App.nameModalCallback=(newName)=>{const parent=getParent(path);const oldName=getName(path);if(parent[newName]){toast('Name exists','error');return;}parent[newName]=parent[oldName];delete parent[oldName];App.tabs.forEach(t=>{if(t.path===path){t.path=getParentPath(path)?getParentPath(path)+'/'+newName:newName;if(App.activeTab===path)App.activeTab=t.path;}});renderTree();renderTabs();updateStatus();toast('Renamed','success');};showNameModal('Rename');hideContextMenu();}
+function ctxCopy(){const node=getNode(App.ctxTarget);if(!node)return;App.clipboard={path:App.ctxTarget,node:JSON.parse(JSON.stringify(node))};toast('Copied','success');hideContextMenu();}
+function ctxDelete(){const path=App.ctxTarget;if(!path)return;if(!confirm('Delete '+path+'?'))return;const parent=getParent(path);delete parent[getName(path)];App.tabs=App.tabs.filter(t=>t.path!==path&&!t.path.startsWith(path+'/'));if(App.activeTab===path||(App.activeTab&&App.activeTab.startsWith(path+'/')))App.activeTab=App.tabs.length?App.tabs[0].path:null;renderTree();renderTabs();loadEditor();updateStatus();toast('Deleted','success');hideContextMenu();}
+function showNameModal(title){document.getElementById('nameModalTitle').textContent=title;document.getElementById('nameModal').classList.add('active');document.getElementById('nameInput').value='';document.getElementById('nameInput').focus();}
+function closeNameModal(){document.getElementById('nameModal').classList.remove('active');}
+function confirmName(){const v=document.getElementById('nameInput').value.trim();if(!v){toast('Name required','error');return;}if(App.nameModalCallback)App.nameModalCallback(v);closeNameModal();}
+function showSettings(){document.getElementById('settingsModal').classList.add('active');}
+function closeSettings(){document.getElementById('settingsModal').classList.remove('active');}
+function updateSettings(){App.settings.autoSave=document.getElementById('settingAutoSave').checked;App.settings.tabSize=parseInt(document.getElementById('settingTabSize').value);App.ai.apiUrl=document.getElementById('settingApiUrl').value;}
+function exportProject(){const data={version:'2.0',timestamp:new Date().toISOString(),fileSystem:App.fs,git:App.git,ai:{messages:App.ai.messages,systemPrompt:App.ai.systemPrompt},settings:App.settings};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='codemind_project_'+Date.now()+'.json';a.click();toast('Exported','success');}
+function importProject(){const input=document.createElement('input');input.type='file';input.accept='.json';input.onchange=(e)=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=(ev)=>{try{const data=JSON.parse(ev.target.result);if(data.fileSystem)App.fs=data.fileSystem;if(data.git)App.git=data.git;if(data.ai){App.ai.messages=data.ai.messages||[];App.ai.systemPrompt=data.ai.systemPrompt||App.ai.systemPrompt;}if(data.settings)App.settings={...App.settings,...data.settings};App.tabs=[];App.activeTab=null;renderTree();renderTabs();renderAi();updateStatus();updateGitBadge();toast('Imported','success');}catch(err){toast('Import failed: '+err.message,'error');}};reader.readAsText(file);};input.click();}
+function persistState(){try{localStorage.setItem('codemind_v2_fs',JSON.stringify(App.fs));localStorage.setItem('codemind_v2_git',JSON.stringify(App.git));localStorage.setItem('codemind_v2_ai',JSON.stringify({messages:App.ai.messages,systemPrompt:App.ai.systemPrompt}));localStorage.setItem('codemind_v2_settings',JSON.stringify(App.settings));}catch(e){}}
+function loadState(){try{const fs=localStorage.getItem('codemind_v2_fs');if(fs)App.fs=JSON.parse(fs);const git=localStorage.getItem('codemind_v2_git');if(git)App.git=JSON.parse(git);const ai=localStorage.getItem('codemind_v2_ai');if(ai){const d=JSON.parse(ai);App.ai.messages=d.messages||[];App.ai.systemPrompt=d.systemPrompt||App.ai.systemPrompt;}const settings=localStorage.getItem('codemind_v2_settings');if(settings)App.settings=JSON.parse(settings);}catch(e){}}
+function toast(msg,type=''){const container=document.getElementById('toastContainer');const div=document.createElement('div');div.style.cssText='padding:10px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.5);font-size:13px;animation:toastIn .3s ease;max-width:320px;'+(type==='success'?'border-color:var(--accent2);color:var(--accent2);':type==='error'?'border-color:var(--danger);color:var(--danger);':'');div.textContent=msg;container.appendChild(div);setTimeout(()=>div.remove(),3000);}
+function copyToClipboard(text){navigator.clipboard.writeText(text).then(()=>toast('Copied','success')).catch(()=>toast('Copy failed','error'));}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('collapsed');}
+function globalKeydown(e){if(e.ctrlKey||e.metaKey){if(e.key==='s'){e.preventDefault();saveFile();}if(e.key==='f'){e.preventDefault();showSearch();}if(e.key==='Enter'){e.preventDefault();runCode();}if(e.key==='`'){e.preventDefault();toggleTerminal();}}if(e.key==='Escape'){closeSearch();closeNameModal();closeSettings();closeTemplates();document.getElementById('gitPanel').classList.remove('active');}}
+init();
+</script>
+</body>
+</html>
